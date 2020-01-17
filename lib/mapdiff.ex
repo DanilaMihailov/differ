@@ -26,7 +26,7 @@ defmodule MapDiff do
 
   def compute(map, map), do: [eq: map]
 
-  def compute(old_map, new_map, differ \\ fn (_old, new) -> [eq: new] end) when is_map(old_map) and is_map(new_map) do
+  def compute(old_map, new_map, differ \\ fn (_old, _new) -> nil end) when is_map(old_map) and is_map(new_map) do
     old_keys = Map.keys(old_map) |> MapSet.new()
     new_keys = Map.keys(new_map) |> MapSet.new()
 
@@ -49,7 +49,7 @@ defmodule MapDiff do
         _ ->
           diff = differ.(elem(old_val, 1), value)
           case diff do
-            [eq: val] -> Keyword.update(acc, :ins, %{key => val}, &(Map.merge(&1, %{key => val})))
+            nil -> Keyword.update(acc, :ins, %{key => value}, &(Map.merge(&1, %{key => value})))
             _ -> Keyword.update(acc, :diff, %{key => diff}, &(Map.merge(&1, %{key => diff})))
           end
       end

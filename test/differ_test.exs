@@ -10,6 +10,7 @@ defmodule DifferTest do
       "nested" => %{
         "list" => [1, 2],
         "map" => %{
+          "same3" => 1,
           "another list" => [0, 1]
         }
       }
@@ -21,6 +22,7 @@ defmodule DifferTest do
       "nested" => %{
         "list" => [0, 2, 3],
         "map" => %{
+          "same3" => 1,
           "another list" => [1],
           "lol" => "querty"
         }
@@ -34,11 +36,12 @@ defmodule DifferTest do
         "changed" => [del: "s", ins: "x", eq: "val"], 
         "nested" => [
           diff: %{
-            "list" => [diff: [ins: 0], eq: [2], ins: [3]], 
+            "list" => [del: [1], ins: [0], eq: [2], ins: [3]], 
             "map" => [
+              eq: %{"same3" => 1}, 
               ins: %{"lol" => "querty"}, 
               diff: %{
-                "another list" => [diff: [ins: 1], del: [1]]
+                "another list" => [del: [0], eq: [1]]
               }
             ]
           }
@@ -46,6 +49,6 @@ defmodule DifferTest do
       }, 
       ins: %{"added" => "new"}]
 
-    assert output == expected_output
+    assert expected_output == output
   end
 end
