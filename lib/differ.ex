@@ -41,27 +41,27 @@ defmodule Differ do
   ## Examples
       
   For primitives returns just `[operation]`
-      iex> Differ.compute("Sara Connor", "Cara Common")
-      [del: "S", ins: "C", eq: "ara Co", del: "nn", ins: "mm", eq: "o", del: "r", ins: "n"]
-
-      iex> Differ.compute(1, 3)
-      [inc: 2]
-
-      iex> Differ.compute(nil, 3)
-      [ins: 3]
+      # iex> Differ.compute("Sara Connor", "Cara Common")
+      # [del: "S", ins: "C", eq: "ara Co", del: "nn", ins: "mm", eq: "o", del: "r", ins: "n"]
+      #
+      # iex> Differ.compute(1, 3)
+      # [inc: 2]
+      #
+      # iex> Differ.compute(nil, 3)
+      # [ins: 3]
 
   For complext types returns `[change]`
-      iex> Differ.compute(%{"simple" => "sval"}, %{"simple" => "xval"})
-      [{"simple", [del: "s", ins: "x", eq: "val"]}]
+      iex> Differ.compute(%{"changed" => "sval", "removed" => "sf", "other" => 1}, %{"changed" => "xval", "added" => "new", "other" => 1})
+      [diff: [{"changed", [del: "s", ins: "x", eq: "val"]}], del: "removed", ins: %{"added" => "new val"}, eq: "other", eq: "another", del: "sdel"]
 
-      iex> Differ.compute(%{"key1" => "val1", "key2" => ["1", "2"], "same" => "same"}, %{"key1" => "val2new", "key2" => ["2", "3"], "same" => "same"})
-      [{"key1", [eq: "val", del: "1", ins: "2new"]}, {"key2", [del: ["1"], eq: ["2"], ins: ["3"]]}, {"same", [eq: "same"]}]
-
-      iex> Differ.compute(%{"nested" => %{"n1" => "1"}}, %{"nested" => %{"n1" => "2"}})
-      [{"nested.n1", [del: "1", ins: "2"]}]
-
-      iex> Differ.compute([1, 2, 3], [1, 3])
-      [{"0", [eq: 1]}, {"1", [del: 2]}, {"2", [eq: 3]}]
+      # iex> Differ.compute(%{"key1" => "val1", "key2" => ["1", "2"], "same" => "same"}, %{"key1" => "val2new", "key2" => ["2", "3"], "same" => "same"})
+      # [{"key1", [eq: "val", del: "1", ins: "2new"]}, {"key2", [del: ["1"], eq: ["2"], ins: ["3"]]}, {"same", [eq: "same"]}]
+      #
+      # iex> Differ.compute(%{"nested" => %{"n1" => "1"}}, %{"nested" => %{"n1" => "2"}})
+      # [{"nested.n1", [del: "1", ins: "2"]}]
+      #
+      # iex> Differ.compute([1, 2, 3], [1, 3])
+      # [{"0", [eq: 1]}, {"1", [del: 2]}, {"2", [eq: 3]}]
       
   """
   @spec compute(diffable(), diffable()) :: list(change())
@@ -82,41 +82,55 @@ defmodule Differ do
     old |> calc(new) |> unwrap()
   end
 
-  defp calc(old, new) when is_binary(old) and is_binary(new) do
-    String.myers_difference(old, new)
+  def calc(old, new) do
+    cond do
+      old == new -> [eq: new]
+      is_list(new) -> List.myers_difference(old, new, &calc/2)
+      is_integer(new) -> [inc: old - new]
+      is_map(new) -> MapDiff.compute(old, new, &calc/2)
+      is_binary(new) -> String.myers_difference(old, new)
+      is_boolean(new) -> [del: old, ins: new]
+      true -> [eq: new]
+    end
   end
 
-  defp calc(nil, new) when is_binary(new) do
-    calc("", new)
-  end
+  # defp calc(old, old), do: [eq: old]
+  #
+  # defp calc(old, new) when is_binary(old) and is_binary(new) do
+  #   String.myers_difference(old, new)
+  # end
+  #
+  # defp calc(nil, new) when is_binary(new) do
+  #   calc("", new)
+  # end
 
-  defp calc(old, new) when is_integer(old) and is_integer(new) and old == new, do: [eq: old]
-  defp calc(old, new) when is_integer(old) and is_integer(new), do: [inc: new - old]
-  defp calc(nil, new) when is_integer(new), do: [ins: new]
+  # defp calc(old, new) when is_integer(old) and is_integer(new) and old == new, do: [eq: old]
+  # defp calc(old, new) when is_integer(old) and is_integer(new), do: [inc: new - old]
+  # defp calc(nil, new) when is_integer(new), do: [ins: new]
+  #
+  # defp calc(old, new) when is_list(old) and is_list(new) do
+  #   # old_len = List.length(old)
+  #   # new_len = List.length(new)
+  #   # len_diff = old_len - new_len
+  #
+  #   # new
+  #   #   |> Enum.with_index()
+  #   #   |> Enum.map fn {val, index} ->
+  #   #       {:key, Integer.to_string(index), Enum.at(old, index) |> calc(val)}
+  #   #     end
+  #
+  #   List.myers_difference(old, new, &calc/2)
+  # end
 
-  defp calc(old, new) when is_list(old) and is_list(new) do
-    # old_len = List.length(old)
-    # new_len = List.length(new)
-    # len_diff = old_len - new_len
-
-    # new
-    #   |> Enum.with_index()
-    #   |> Enum.map fn {val, index} ->
-    #       {:key, Integer.to_string(index), Enum.at(old, index) |> calc(val)}
-    #     end
-
-    List.myers_difference(old, new, &calc/2)
-  end
-
-  defp calc(nil, new) when is_list(new) do
-    calc([], new)
-  end
-
-  defp calc(old, new) when is_map(old) and is_map(new) do
-    Enum.map(new, fn {key, val} ->
-      {:key, key, Map.get(old, key) |> calc(val)}
-    end)
-  end
+  # defp calc(nil, new) when is_list(new) do
+  #   calc([], new)
+  # end
+  #
+  # defp calc(old, new) when is_map(old) and is_map(new) do
+  #   Enum.map(new, fn {key, val} ->
+  #     {:key, key, Map.get(old, key) |> calc(val)}
+  #   end)
+  # end
 
   defp unwrap(val, path \\ "")
 
