@@ -86,7 +86,7 @@ defmodule Differ do
     cond do
       old == new -> [eq: new]
       is_list(new) -> List.myers_difference(old, new, &calc/2)
-      is_integer(new) -> [inc: old - new]
+      is_integer(new) -> [ins: new]
       is_map(new) -> MapDiff.compute(old, new, &calc/2)
       is_binary(new) -> String.myers_difference(old, new)
       is_boolean(new) -> [del: old, ins: new]

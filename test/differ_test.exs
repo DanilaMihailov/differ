@@ -28,13 +28,23 @@ defmodule DifferTest do
     }
     output = Differ.calc(old_map, new_map)
     expected_output = [
-      diff: [{"changed", [del: "s", ins: "x", eq: "val"]}], 
-      del: "removed", 
-      ins: %{"added" => "new val"}, 
-      eq: "other", 
-      eq: "another", 
-      del: "sdel"
-    ]
+      del: %{"removed" => "sf"}, 
+      eq: %{"same" => 1}, 
+      diff: %{
+        "changed" => [del: "s", ins: "x", eq: "val"], 
+        "nested" => [
+          diff: %{
+            "list" => [diff: [ins: 0], eq: [2], ins: [3]], 
+            "map" => [
+              ins: %{"lol" => "querty"}, 
+              diff: %{
+                "another list" => [diff: [ins: 1], del: [1]]
+              }
+            ]
+          }
+        ]
+      }, 
+      ins: %{"added" => "new"}]
 
     assert output == expected_output
   end
