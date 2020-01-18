@@ -57,7 +57,7 @@ defmodule Differ do
   def get_diff_type(diff) do
     case diff do
       [{:skip, _num} | tail] -> get_diff_type(tail)
-      [{:remove, _num} | tail] -> get_diff_type(tail)
+      # [{:remove, _num} | tail] -> get_diff_type(tail)
       [{:diff, _val} | _] -> :list
       [{_key, _op, _val} | _] -> :map
       [{_op, val} | _] when is_binary(val) -> :string
@@ -94,13 +94,13 @@ defmodule Differ do
       iex(2)> Differ.revert diff
       ["22", "1"]
   """
-  @spec revert(diff()) :: diffable()
-  def revert(diff) do
+  @spec revert(diffable(), diff()) :: diffable()
+  def revert(obj, diff) do
     type = get_diff_type(diff)
 
     case type do
       :unknown -> nil
-      _ -> revert(type, diff)
+      _ -> revert(type, obj, diff)
     end
   end
 
@@ -117,7 +117,7 @@ defmodule Differ do
         :eq -> {new_str <> val, new_index}
         :ins -> {new_str <> val, index}
 
-        :remove -> {new_str, new_index}
+        # :remove -> {new_str, new_index}
         :skip -> {new_str <> String.slice(old_str, index, val), new_index}
       end
     end)
@@ -139,7 +139,7 @@ defmodule Differ do
         :ins -> {new_list ++ val, index}
         :diff -> {new_list ++ [patch(Enum.at(old_list, index), val)], index}
 
-        :remove -> {new_list, new_index}
+        # :remove -> {new_list, new_index}
         :skip -> {new_list ++ Enum.slice(old_list, index, val), new_index}
       end
     end)
@@ -158,31 +158,56 @@ defmodule Differ do
     end)
   end
 
-  defp revert(:string, diff) do
-    Enum.reduce(diff, "", fn {op, val}, new_str ->
+  defp revert(:string, old_string, diff) do
+    {str, _} = Enum.reduce(diff, {"", 0}, fn {op, val}, {new_str, index} ->
+      new_index = if is_binary(val) do
+        String.length(val) + index
+      else
+        val + index
+      end
+
       case op do
-        :ins -> new_str
-        _ -> new_str <> val
+        :ins -> {new_str, new_index}
+        :eq -> {new_str <> val, new_index}
+        :del -> {new_str <> val, index}
+
+        # :remove -> {new_str, new_index}
+        :skip -> {new_str <> String.slice(old_string, index, val), new_index}
       end
     end)
+
+    str
   end
 
-  defp revert(:list, diff) do
-    Enum.reduce(diff, [], fn {op, val}, new_list ->
+  defp revert(:list, old_list, diff) do
+    {list, _} = Enum.reduce(diff, {[], 0}, fn {op, val}, {new_list, index} ->
+      new_index = if is_list(val) do
+        Enum.count(val) + index
+      else
+        val + index
+      end
+
       case op do
-        :ins -> new_list
-        :diff -> new_list ++ [revert(val)]
-        _ -> new_list ++ val
+        :ins -> {new_list, new_index}
+        :eq -> {new_list ++ val, new_index}
+        :del -> {new_list ++ val, index}
+        :diff -> {new_list ++ [revert(Enum.at(old_list, index), val)], index}
+
+        # :remove -> {new_list, new_index}
+        :skip -> {new_list ++ Enum.slice(old_list, index, val), new_index}
       end
     end)
+
+    list
   end
 
-  defp revert(:map, diff) do
-    Enum.reduce(diff, %{}, fn {key, op, val}, new_map ->
+  defp revert(:map, old_map, diff) do
+    Enum.reduce(diff, old_map, fn {key, op, val}, new_map ->
       case op do
-        :ins -> new_map
-        :diff -> Map.put(new_map, key, revert(val))
-        _ -> Map.put(new_map, key, val)
+        :ins -> Map.delete(new_map, key)
+        :eq -> new_map
+        :del -> Map.put(new_map, key, val)
+        :diff -> Map.put(new_map, key, revert(Map.get(new_map, key), val))
       end
     end)
   end
