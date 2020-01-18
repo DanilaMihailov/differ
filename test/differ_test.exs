@@ -59,7 +59,6 @@ defmodule DifferTest do
     diff = Differ.compute(old_str, new_str)
 
     assert new_str == Differ.patch(old_str, diff)
-
   end
 
   test "string diffs are revertable" do
