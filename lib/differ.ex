@@ -8,150 +8,152 @@ defmodule Differ do
   * `:del` - delete
   * `:ins` - insert
   * `:eq` - doesnt change
-  * `:inc` - increment (only aplicable for `number()`)
+  * `:diff` - nested diff that should be applied
   """
-  @type operator() :: :del | :ins | :eq | :inc
+  @type operator() :: :del | :ins | :eq | :diff
 
   @typedoc """
   Defines operator and value that need to be applied with operator
   ## Examples
       {:del, "s"}
-
+      {"key", :ins, "s"}
   """
-  @type operation() :: {operator(), any}
-
-  @typedoc """
-  Defines path to value and operations needed to be done to this value
-
-  ## Examples
-  If we had user with name "Cara" and name was changed to "Sara", we could represent it like this
-      {"user.name", [del: "C", ins: "S", eq: "ara"]}
-  """
-  @type change() :: {String.t(), [operation]}
+  @type operation() :: {operator(), any} | {any, operator(), any}
 
   @typedoc "Types that supported by `Differ.compute/2`"
   @type diffable() :: String.t() | number() | %{any() => diffable()} | list(diffable())
 
-
-
+  @typedoc "List of operations need to be applied"
+  @type diff() :: list(operation())
 
   @doc """
   Computes diff between 2 objects of same type
-
-  ## Examples
-      
-  For primitives returns just `[operation]`
-      # iex> Differ.compute("Sara Connor", "Cara Common")
-      # [del: "S", ins: "C", eq: "ara Co", del: "nn", ins: "mm", eq: "o", del: "r", ins: "n"]
-      #
-      # iex> Differ.compute(1, 3)
-      # [inc: 2]
-      #
-      # iex> Differ.compute(nil, 3)
-      # [ins: 3]
-
-  For complext types returns `[change]`
-      iex> Differ.compute(%{"changed" => "sval", "removed" => "sf", "other" => 1}, %{"changed" => "xval", "added" => "new", "other" => 1})
-      [diff: [{"changed", [del: "s", ins: "x", eq: "val"]}], del: "removed", ins: %{"added" => "new val"}, eq: "other", eq: "another", del: "sdel"]
-
-      # iex> Differ.compute(%{"key1" => "val1", "key2" => ["1", "2"], "same" => "same"}, %{"key1" => "val2new", "key2" => ["2", "3"], "same" => "same"})
-      # [{"key1", [eq: "val", del: "1", ins: "2new"]}, {"key2", [del: ["1"], eq: ["2"], ins: ["3"]]}, {"same", [eq: "same"]}]
-      #
-      # iex> Differ.compute(%{"nested" => %{"n1" => "1"}}, %{"nested" => %{"n1" => "2"}})
-      # [{"nested.n1", [del: "1", ins: "2"]}]
-      #
-      # iex> Differ.compute([1, 2, 3], [1, 3])
-      # [{"0", [eq: 1]}, {"1", [del: 2]}, {"2", [eq: 3]}]
-      
   """
-  @spec compute(diffable(), diffable()) :: list(change())
-  def compute(old, new)
-
-  def compute(old, new) when is_binary(old) and is_binary(new) do
-    old |> calc(new)
-  end
-
-  def compute(old, new) when is_integer(old) and is_integer(new) do
-    old |> calc(new)
-  end
-
-  def compute(nil, new) when is_integer(new), do: calc(nil, new)
-
-  @spec compute(diffable(), diffable()) :: list(change())
+  @spec compute(diffable(), diffable()) :: list(any())
   def compute(old, new) do
-    old |> calc(new) |> unwrap()
-  end
-
-  def calc(old, new) do
     cond do
       old == new -> [eq: new]
-      is_list(new) -> List.myers_difference(old, new, &calc/2)
-      is_map(new) -> MapDiff.compute(old, new, &calc/2)
+      is_list(new) -> List.myers_difference(old, new, &compute/2)
+      is_map(new) -> MapDiff.compute(old, new, &compute/2)
       is_binary(new) -> String.myers_difference(old, new)
       true -> nil
     end
   end
 
-  # defp calc(old, old), do: [eq: old]
-  #
-  # defp calc(old, new) when is_binary(old) and is_binary(new) do
-  #   String.myers_difference(old, new)
-  # end
-  #
-  # defp calc(nil, new) when is_binary(new) do
-  #   calc("", new)
-  # end
+  @doc """
+  Detects diff type
 
-  # defp calc(old, new) when is_integer(old) and is_integer(new) and old == new, do: [eq: old]
-  # defp calc(old, new) when is_integer(old) and is_integer(new), do: [inc: new - old]
-  # defp calc(nil, new) when is_integer(new), do: [ins: new]
-  #
-  # defp calc(old, new) when is_list(old) and is_list(new) do
-  #   # old_len = List.length(old)
-  #   # new_len = List.length(new)
-  #   # len_diff = old_len - new_len
-  #
-  #   # new
-  #   #   |> Enum.with_index()
-  #   #   |> Enum.map fn {val, index} ->
-  #   #       {:key, Integer.to_string(index), Enum.at(old, index) |> calc(val)}
-  #   #     end
-  #
-  #   List.myers_difference(old, new, &calc/2)
-  # end
+  If cannot detect type, or diff is empty returns `:unknown`
 
-  # defp calc(nil, new) when is_list(new) do
-  #   calc([], new)
-  # end
-  #
-  # defp calc(old, new) when is_map(old) and is_map(new) do
-  #   Enum.map(new, fn {key, val} ->
-  #     {:key, key, Map.get(old, key) |> calc(val)}
-  #   end)
-  # end
+  ## Examples
+      iex> Differ.get_diff_type [diff: [eq: "2", del: "2"], eq: ["1"], ins: ["3"]]
+      :list
+      
+      iex> Differ.get_diff_type []
+      :unknown
 
-  defp unwrap(val, path \\ "")
-
-  defp unwrap({:key, key, val}, path) do
-    IO.puts("unwrap #{key} -> #{path}")
-    IO.inspect(val)
-    unwrap(val, "#{path}.#{key}" |> String.trim("."))
-  end
-
-  defp unwrap(obj = {_key, _val}, path) do
-    case path do
-      "" -> obj
-      _ -> {path, obj}
+  """
+  @spec get_diff_type(diff()) :: :list | :map | :string | :unknown
+  def get_diff_type(diff) do
+    case diff do
+      [{:diff, _val} | _] -> :list
+      [{_key, _op, _val} | _] -> :map
+      [{_op, val} | _] when is_binary(val) -> :string
+      [{_op, val} | _] when is_list(val) -> :list
+      _ -> :unknown
     end
   end
 
-  defp unwrap(val, path) when is_list(val) do
-    IO.puts("unwrap list -> #{path}")
-    IO.inspect(val)
-    cond do
-      Keyword.keyword?(val) -> {path, val}
-      true -> Enum.map(val, fn el -> unwrap(el, path) end) |> List.flatten()
+  @doc """
+  Applies diff and returns patched value
+
+  ## Examples
+      iex(1)> diff = Differ.compute ["22", "1"], ["2", "1", "3"]
+      iex(2)> Differ.patch diff
+      ["2", "1", "3"]
+  """
+  @spec patch(diff()) :: diffable()
+  def patch(diff) do
+    type = get_diff_type(diff)
+    case type do
+      :unknown -> nil
+      _ -> patch(type, diff)
     end
-    
   end
+
+  @doc """
+  Reverts diff and returns patched value
+
+  ## Examples
+      iex(1)> diff = Differ.compute ["22", "1"], ["2", "1", "3"]
+      iex(2)> Differ.revert diff
+      ["22", "1"]
+  """
+  @spec revert(diff()) :: diffable()
+  def revert(diff) do
+    type = get_diff_type(diff)
+    case type do
+      :unknown -> nil
+      _ -> revert(type, diff)
+    end
+  end
+
+  defp patch(:string, diff) do
+    Enum.reduce(diff, "", fn ({op, val}, new_str) ->
+      case op do
+        :del -> new_str
+        _ -> new_str <> val
+      end
+    end)
+  end
+
+  defp patch(:list, diff) do
+    Enum.reduce(diff, [], fn ({op, val}, new_list) ->
+      case op do
+        :del -> new_list
+        :diff -> new_list ++ [patch(val)]
+        _ -> new_list ++ val
+      end
+    end)
+  end
+
+  defp patch(:map, diff) do
+    Enum.reduce(diff, %{}, fn ({key, op, val}, new_map) ->
+      case op do
+        :del -> new_map
+        :diff -> Map.put(new_map, key, patch(val))
+        _ -> Map.put(new_map, key, val)
+      end
+    end)
+  end
+
+  defp revert(:string, diff) do
+    Enum.reduce(diff, "", fn ({op, val}, new_str) ->
+      case op do
+        :ins -> new_str
+        _ -> new_str <> val
+      end
+    end)
+  end
+
+  defp revert(:list, diff) do
+    Enum.reduce(diff, [], fn ({op, val}, new_list) ->
+      case op do
+        :ins -> new_list
+        :diff -> new_list ++ [revert(val)]
+        _ -> new_list ++ val
+      end
+    end)
+  end
+
+  defp revert(:map, diff) do
+    Enum.reduce(diff, %{}, fn ({key, op, val}, new_map) ->
+      case op do
+        :ins -> new_map
+        :diff -> Map.put(new_map, key, revert(val))
+        _ -> Map.put(new_map, key, val)
+      end
+    end)
+  end
+
 end

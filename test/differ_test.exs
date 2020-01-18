@@ -1,6 +1,6 @@
 defmodule DifferTest do
   use ExUnit.Case
-  # doctest Differ
+  doctest Differ
 
   test "greets the world" do
     old_map = %{
@@ -28,26 +28,21 @@ defmodule DifferTest do
         }
       }
     }
-    output = Differ.calc(old_map, new_map)
+    output = Differ.compute(old_map, new_map)
     expected_output = [
-      del: %{"removed" => "sf"}, 
-      eq: %{"same" => 1}, 
-      diff: %{
-        "changed" => [del: "s", ins: "x", eq: "val"], 
-        "nested" => [
-          diff: %{
-            "list" => [del: [1], ins: [0], eq: [2], ins: [3]], 
-            "map" => [
-              eq: %{"same3" => 1}, 
-              ins: %{"lol" => "querty"}, 
-              diff: %{
-                "another list" => [del: [0], eq: [1]]
-              }
-            ]
-          }
-        ]
-      }, 
-      ins: %{"added" => "new"}]
+      {"same", :eq, 1}, 
+      {"nested", :diff, [
+        {"map", :diff, [
+          {"same3", :eq, 1}, 
+          {"lol", :ins, "querty"}, 
+          {"another list", :diff, [del: [0], eq: [1]]}
+        ]}, 
+        {"list", :diff, [del: [1], ins: [0], eq: [2], ins: [3]]}
+      ]}, 
+      {"changed", :diff, [del: "s", ins: "x", eq: "val"]}, 
+      {"added", :ins, "new"}, 
+      {"removed", :del, "sf"}
+    ]
 
     assert expected_output == output
   end

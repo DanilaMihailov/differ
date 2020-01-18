@@ -14,9 +14,9 @@ defmodule MapDiffTest do
       "other" => 1
     }
     output = MapDiff.compute(old_map, new_map)
-    expected_output = [del: %{"removed" => "sf"}, eq: %{"other" => 1}, ins: %{"added" => "new", "changed" => "xval"}]
+    expected_output = [{"other", :eq, 1}, {"changed", :ins, "xval"}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
 
-    assert output == expected_output
+    assert expected_output == output
   end
 
   defp differ(old, new) do
@@ -26,7 +26,6 @@ defmodule MapDiffTest do
       true -> [eq: new]
     end
   end
-
 
   test "nested maps" do
     old_map = %{
@@ -50,17 +49,9 @@ defmodule MapDiffTest do
       }
     }
     output = MapDiff.compute(old_map, new_map, &differ/2)
-    expected_output = [del: %{"removed" => "sf"}, eq: %{"other" => 1}, ins: %{"added" => "new", "changed" => "xval"}]
+    expected_output = [{"other", :eq, 1}, {"nested", :diff, [{"update this", :diff, [del: "old", ins: "new", eq: " str"]}, {"same", :eq, 0}, {"new", :ins, 9}, {"del this", :del, 1}]}, {"changed", :diff, [del: "s", ins: "x", eq: "val"]}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
 
     assert output == expected_output
 
-  end
-
-  test "condense simple" do
-    diff = [del: %{"removed" => "sf"}, ins: %{"added" => "new", "changed" => "xval"}, eq: %{"other" => 1}]
-    output = MapDiff.condense(diff)
-    expected_output = [del: ["removed"], ins: %{"added" => "new", "changed" => "xval"}, eq: ["other"]]
-
-    assert output == expected_output
   end
 end

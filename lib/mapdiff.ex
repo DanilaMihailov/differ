@@ -19,63 +19,36 @@ defmodule MapDiff do
       ...>  "other" => 1
       ...> }
       iex> MapDiff.compute(old_map, new_map)
-      [del: %{"removed" => "sf"}, eq: %{"other" => 1}, ins: %{"added" => "new", "changed" => "xval"}]
+      [{"other", :eq, 1}, {"changed", :ins, "xval"}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
   """
-  @spec compute(map(), map()) :: [{atom(), map()}]
+  @spec compute(map(), map()) :: [{any(), atom(), map()}]
   def compute(old_map, new_map)
 
   def compute(map, map), do: [eq: map]
 
-  def compute(old_map, new_map, differ \\ fn (_old, _new) -> nil end) when is_map(old_map) and is_map(new_map) do
+  def compute(old_map, new_map, differ \\ fn (_old, _new) -> nil end) do
     old_keys = Map.keys(old_map) |> MapSet.new()
     new_keys = Map.keys(new_map) |> MapSet.new()
 
     del_keys = MapSet.difference(old_keys, new_keys)
-    add_keys = MapSet.difference(new_keys, old_keys)
-    same_keys = MapSet.intersection(old_keys, new_keys)
 
-    res = []
+    res = Enum.reduce(del_keys, [], fn (key, ops) -> 
+      [{key, :del, Map.fetch!(old_map, key)} | ops]
+    end)
 
-    res = if MapSet.size(del_keys) > 0, do: [{:del, Map.take(old_map, del_keys)} | res], else: res
-
-    new_changes = Enum.reduce(MapSet.union(same_keys, add_keys), [], fn (key, acc) ->
+    Enum.reduce(new_map, res, fn ({key, val}, ops) -> 
       old_val = Map.fetch(old_map, key)
-      new_val = Map.fetch(new_map, key)
-      {:ok, value} = new_val
 
       case old_val do
-        :error -> Keyword.update(acc, :ins, %{key => value}, &(Map.merge(&1, %{key => value})))
-        ^new_val -> Keyword.update(acc, :eq, %{key => value}, &(Map.merge(&1, %{key => value})))
-        _ ->
-          diff = differ.(elem(old_val, 1), value)
+        :error -> [{key, :ins, val} | ops]
+        {:ok, ^val} -> [{key, :eq, val} | ops]
+        {:ok, old} ->
+          diff = differ.(old, val)
           case diff do
-            nil -> Keyword.update(acc, :ins, %{key => value}, &(Map.merge(&1, %{key => value})))
-            _ -> Keyword.update(acc, :diff, %{key => diff}, &(Map.merge(&1, %{key => diff})))
+            nil -> [{key, :ins, val} | ops]
+            _ -> [{key, :diff, diff} | ops]
           end
       end
     end)
-
-    res = new_changes ++ res
-
-    Enum.reverse res
   end
-
-  @doc """
-  Condenses diff by removing values from `:del` and `:eq` keys
-
-  ## Examples
-      iex> MapDiff.condense([del: %{"removed" => "sf"}, ins: %{"added" => "new", "changed" => "xval"}, eq: %{"other" => 1}])
-      [del: ["removed"], ins: %{"added" => "new", "changed" => "xval"}, eq: ["other"]]
-
-  """
-  @spec condense([{atom(), map()}]) :: [{atom(), map() | list(String.t())}]
-  def condense(diff) do
-    Enum.map(diff, fn {key, val} -> 
-      case key do
-        :ins -> {key, val}
-        _ -> {key, Map.keys(val)}
-      end
-    end)
-  end
-
 end
