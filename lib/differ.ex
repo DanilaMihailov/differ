@@ -224,7 +224,6 @@ defmodule Differ do
           :ins -> {new_str, new_index}
           :eq -> {new_str <> val, new_index}
           :del -> {new_str <> val, index}
-          # :remove -> {new_str, new_index}
           :skip -> {new_str <> String.slice(old_string, index, val), new_index}
         end
       end)
@@ -247,7 +246,6 @@ defmodule Differ do
           :eq -> {new_list ++ val, new_index}
           :del -> {new_list ++ val, index}
           :diff -> {new_list ++ [revert(Enum.at(old_list, index), val)], index}
-          # :remove -> {new_list, new_index}
           :skip -> {new_list ++ Enum.slice(old_list, index, val), new_index}
         end
       end)
