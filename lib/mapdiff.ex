@@ -26,6 +26,25 @@ defmodule MapDiff do
 
   def compute(map, map), do: [eq: map]
 
+  @doc """
+  Calculates diff beetwen maps using diffing function
+
+  ## Examples
+
+      iex> old_map = %{
+      ...>  "changed" => "sval", 
+      ...>  "removed" => "sf", 
+      ...>  "other" => "same string"
+      ...> }
+      iex> new_map = %{
+      ...>  "changed" => "xval", 
+      ...>  "added" => "new", 
+      ...>  "other" => "same string"
+      ...> }
+      iex> MapDiff.compute(old_map, new_map, &String.myers_difference/2)
+      [{"other", :eq, 1}, {"changed", :diff, [del: "s", ins: "x", eq: "val"]}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
+  """
+  @spec compute(map(), map(), (Differ.diffable(), Differ.diffable() -> Differ.diff() | nil)) :: Differ.diff()
   def compute(old_map, new_map, differ \\ fn _old, _new -> nil end) do
     old_keys = Map.keys(old_map) |> MapSet.new()
     new_keys = Map.keys(new_map) |> MapSet.new()
