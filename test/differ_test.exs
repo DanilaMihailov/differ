@@ -57,8 +57,12 @@ defmodule DifferTest do
     new_str = "Hello, I'am Danila"
 
     diff = Differ.compute(old_str, new_str)
+    op_diff = Differ.optimize_size(diff)
+    non_rev_diff = Differ.optimize_size(diff, false)
 
     assert new_str == Differ.patch(old_str, diff)
+    assert new_str == Differ.patch(old_str, op_diff)
+    assert new_str == Differ.patch(old_str, non_rev_diff)
   end
 
   test "string diffs are revertable" do
@@ -66,6 +70,19 @@ defmodule DifferTest do
     new_str = "Hello, I'am Danila"
 
     diff = Differ.compute(old_str, new_str)
+    op_diff = Differ.optimize_size(diff)
+    non_rev_diff = Differ.optimize_size(diff, false)
+
+    assert old_str == Differ.revert(new_str, diff)
+    assert old_str == Differ.revert(new_str, op_diff)
+    assert catch_error(Differ.revert(new_str, non_rev_diff)) == {:case_clause, :remove}
+  end
+
+  test "string diff without deletion are revertable" do
+    old_str = "Hello, "
+    new_str = "Hello, World!"
+
+    diff = Differ.compute(old_str, new_str) |> Differ.optimize_size(false)
 
     assert old_str == Differ.revert(new_str, diff)
   end
