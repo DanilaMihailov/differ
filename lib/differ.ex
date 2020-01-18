@@ -127,6 +127,9 @@ defmodule Differ do
         {:diff, ndiff} ->
           acc ++ [{:diff, optimize_size(ndiff)}]
 
+        {key, :diff, ndiff} ->
+          acc ++ [{key, :diff, optimize_size(ndiff)}]
+
         {:eq, val} when is_list(val) ->
           acc ++ [{:skip, Enum.count(val)}]
 
