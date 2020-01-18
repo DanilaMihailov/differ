@@ -42,7 +42,7 @@ defmodule MapDiff do
       ...>  "other" => "same string"
       ...> }
       iex> MapDiff.compute(old_map, new_map, &String.myers_difference/2)
-      [{"other", :eq, 1}, {"changed", :diff, [del: "s", ins: "x", eq: "val"]}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
+      [{"other", :eq, "same string"}, {"changed", :diff, [del: "s", ins: "x", eq: "val"]}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
   """
   @spec compute(map(), map(), (Differ.diffable(), Differ.diffable() -> Differ.diff() | nil)) :: Differ.diff()
   def compute(old_map, new_map, differ \\ fn _old, _new -> nil end) do

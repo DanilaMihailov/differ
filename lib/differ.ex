@@ -56,6 +56,8 @@ defmodule Differ do
   @spec get_diff_type(diff()) :: :list | :map | :string | :unknown
   def get_diff_type(diff) do
     case diff do
+      [{:skip, _num} | tail] -> get_diff_type(tail)
+      [{:remove, _num} | tail] -> get_diff_type(tail)
       [{:diff, _val} | _] -> :list
       [{_key, _op, _val} | _] -> :map
       [{_op, val} | _] when is_binary(val) -> :string
@@ -68,17 +70,19 @@ defmodule Differ do
   Applies diff and returns patched value
 
   ## Examples
-      iex(1)> diff = Differ.compute ["22", "1"], ["2", "1", "3"]
-      iex(2)> Differ.patch diff
+      iex(1)> old_list = ["22", "1"]
+      iex(1)> diff = Differ.compute old_list, ["2", "1", "3"]
+      iex(2)> Differ.patch old_list, diff
       ["2", "1", "3"]
   """
-  @spec patch(diff()) :: diffable()
-  def patch(diff) do
+  @spec patch(diffable(), diff()) :: diffable() | nil
+  def patch(obj, diff) do
+    # TODO: compare obj type with diff type
     type = get_diff_type(diff)
 
     case type do
       :unknown -> nil
-      _ -> patch(type, diff)
+      _ -> patch(type, obj, diff)
     end
   end
 
@@ -100,31 +104,56 @@ defmodule Differ do
     end
   end
 
-  defp patch(:string, diff) do
-    Enum.reduce(diff, "", fn {op, val}, new_str ->
+  defp patch(:string, old_str, diff) do
+    {str, _} = Enum.reduce(diff, {"", 0}, fn {op, val}, {new_str, index} ->
+      new_index = if is_binary(val) do
+        String.length(val) + index
+      else
+        val + index
+      end
+
       case op do
-        :del -> new_str
-        _ -> new_str <> val
+        :del -> {new_str, new_index}
+        :eq -> {new_str <> val, new_index}
+        :ins -> {new_str <> val, index}
+
+        :remove -> {new_str, new_index}
+        :skip -> {new_str <> String.slice(old_str, index, val), new_index}
       end
     end)
+
+    str
   end
 
-  defp patch(:list, diff) do
-    Enum.reduce(diff, [], fn {op, val}, new_list ->
+  defp patch(:list, old_list, diff) do
+    {list, _} = Enum.reduce(diff, {[], 0}, fn {op, val}, {new_list, index} ->
+      new_index = if is_list(val) do
+        Enum.count(val) + index
+      else
+        val + index
+      end
+
       case op do
-        :del -> new_list
-        :diff -> new_list ++ [patch(val)]
-        _ -> new_list ++ val
+        :del -> {new_list, new_index}
+        :eq -> {new_list ++ val, new_index}
+        :ins -> {new_list ++ val, index}
+        :diff -> {new_list ++ [patch(Enum.at(old_list, index), val)], index}
+
+        :remove -> {new_list, new_index}
+        :skip -> {new_list ++ Enum.slice(old_list, index, val), new_index}
       end
     end)
+
+    list
   end
 
-  defp patch(:map, diff) do
-    Enum.reduce(diff, %{}, fn {key, op, val}, new_map ->
+  defp patch(:map, old_map, diff) do
+    Enum.reduce(diff, old_map, fn {key, op, val}, new_map ->
       case op do
-        :del -> new_map
-        :diff -> Map.put(new_map, key, patch(val))
-        _ -> Map.put(new_map, key, val)
+        :del -> Map.delete(new_map, key)
+        :eq -> new_map
+        :ins -> Map.put(new_map, key, val)
+        :diff -> Map.put(new_map, key, patch(Map.get(new_map, key), val))
       end
     end)
   end
