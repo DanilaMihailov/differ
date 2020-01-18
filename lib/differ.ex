@@ -90,8 +90,10 @@ defmodule Differ do
   Reverts diff and returns patched value
 
   ## Examples
-      iex(1)> diff = Differ.compute ["22", "1"], ["2", "1", "3"]
-      iex(2)> Differ.revert diff
+      iex(1)> old_list = ["22", "1"]
+      iex(1)> new_list = ["2", "1", "3"]
+      iex(1)> diff = Differ.compute old_list, new_list 
+      iex(2)> Differ.revert new_list, diff
       ["22", "1"]
   """
   @spec revert(diffable(), diff()) :: diffable()
