@@ -29,7 +29,7 @@ defmodule Differ do
   @doc """
   Computes diff between 2 objects of same type
   """
-  @spec compute(diffable(), diffable()) :: list(any())
+  @spec compute(diffable(), diffable()) :: diff()
   def compute(old, new) do
     cond do
       old == new -> [eq: new]
