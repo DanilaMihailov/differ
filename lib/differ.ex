@@ -57,7 +57,7 @@ defmodule Differ do
   def get_diff_type(diff) do
     case diff do
       [{:skip, _num} | tail] -> get_diff_type(tail)
-      # [{:remove, _num} | tail] -> get_diff_type(tail)
+      [{:remove, _num} | tail] -> get_diff_type(tail)
       [{:diff, _val} | _] -> :list
       [{_key, _op, _val} | _] -> :map
       [{_op, val} | _] when is_binary(val) -> :string
@@ -120,24 +120,33 @@ defmodule Differ do
       iex> Differ.optimize_size(diff)
       [skip: 41, del: "t", skip: 4]
   """
-  @spec optimize_size(diff()) :: diff()
-  def optimize_size(diff) do
+  @spec optimize_size(diff(), boolean()) :: diff()
+  def optimize_size(diff, revertable \\ true) do
     Enum.reduce(diff, [], fn change, acc ->
       case change do
         {:diff, ndiff} ->
-          acc ++ [{:diff, optimize_size(ndiff)}]
+          acc ++ [{:diff, optimize_size(ndiff, revertable)}]
 
         {key, :diff, ndiff} ->
-          acc ++ [{key, :diff, optimize_size(ndiff)}]
+          acc ++ [{key, :diff, optimize_size(ndiff, revertable)}]
 
         {:eq, val} when is_list(val) ->
           acc ++ [{:skip, Enum.count(val)}]
 
+        {:del, val} when is_list(val) and not revertable ->
+          acc ++ [{:remove, Enum.count(val)}]
+
         {:eq, val} when is_binary(val) ->
           acc ++ [{:skip, String.length(val)}]
 
+        {:del, val} when is_binary(val) and not revertable ->
+          acc ++ [{:remove, String.length(val)}]
+
         {_key, :eq, _val} ->
           acc
+
+        {key, :del, _val} when not revertable ->
+          acc ++ [remove: key]
 
         _ ->
           acc ++ [change]
@@ -159,7 +168,7 @@ defmodule Differ do
           :del -> {new_str, new_index}
           :eq -> {new_str <> val, new_index}
           :ins -> {new_str <> val, index}
-          # :remove -> {new_str, new_index}
+          :remove -> {new_str, new_index}
           :skip -> {new_str <> String.slice(old_str, index, val), new_index}
         end
       end)
@@ -182,7 +191,7 @@ defmodule Differ do
           :eq -> {new_list ++ val, new_index}
           :ins -> {new_list ++ val, index}
           :diff -> {new_list ++ [patch(Enum.at(old_list, index), val)], index}
-          # :remove -> {new_list, new_index}
+          :remove -> {new_list, new_index}
           :skip -> {new_list ++ Enum.slice(old_list, index, val), new_index}
         end
       end)

@@ -69,5 +69,4 @@ defmodule DifferTest do
 
     assert old_str == Differ.revert(new_str, diff)
   end
-
 end
