@@ -4,17 +4,25 @@ defmodule MapDiffTest do
 
   test "simple" do
     old_map = %{
-      "changed" => "sval", 
-      "removed" => "sf", 
+      "changed" => "sval",
+      "removed" => "sf",
       "other" => 1
     }
+
     new_map = %{
-      "changed" => "xval", 
-      "added" => "new", 
+      "changed" => "xval",
+      "added" => "new",
       "other" => 1
     }
+
     output = MapDiff.compute(old_map, new_map)
-    expected_output = [{"other", :eq, 1}, {"changed", :ins, "xval"}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
+
+    expected_output = [
+      {"other", :eq, 1},
+      {"changed", :ins, "xval"},
+      {"added", :ins, "new"},
+      {"removed", :del, "sf"}
+    ]
 
     assert expected_output == output
   end
@@ -29,18 +37,19 @@ defmodule MapDiffTest do
 
   test "nested maps" do
     old_map = %{
-      "changed" => "sval", 
-      "removed" => "sf", 
+      "changed" => "sval",
+      "removed" => "sf",
       "other" => 1,
       "nested" => %{
         "same" => 0,
         "del this" => 1,
-        "update this" => "old str",
+        "update this" => "old str"
       }
     }
+
     new_map = %{
-      "changed" => "xval", 
-      "added" => "new", 
+      "changed" => "xval",
+      "added" => "new",
       "other" => 1,
       "nested" => %{
         "same" => 0,
@@ -48,10 +57,23 @@ defmodule MapDiffTest do
         "new" => 9
       }
     }
+
     output = MapDiff.compute(old_map, new_map, &differ/2)
-    expected_output = [{"other", :eq, 1}, {"nested", :diff, [{"update this", :diff, [del: "old", ins: "new", eq: " str"]}, {"same", :eq, 0}, {"new", :ins, 9}, {"del this", :del, 1}]}, {"changed", :diff, [del: "s", ins: "x", eq: "val"]}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
+
+    expected_output = [
+      {"other", :eq, 1},
+      {"nested", :diff,
+       [
+         {"update this", :diff, [del: "old", ins: "new", eq: " str"]},
+         {"same", :eq, 0},
+         {"new", :ins, 9},
+         {"del this", :del, 1}
+       ]},
+      {"changed", :diff, [del: "s", ins: "x", eq: "val"]},
+      {"added", :ins, "new"},
+      {"removed", :del, "sf"}
+    ]
 
     assert output == expected_output
-
   end
 end

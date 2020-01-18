@@ -75,6 +75,7 @@ defmodule Differ do
   @spec patch(diff()) :: diffable()
   def patch(diff) do
     type = get_diff_type(diff)
+
     case type do
       :unknown -> nil
       _ -> patch(type, diff)
@@ -92,6 +93,7 @@ defmodule Differ do
   @spec revert(diff()) :: diffable()
   def revert(diff) do
     type = get_diff_type(diff)
+
     case type do
       :unknown -> nil
       _ -> revert(type, diff)
@@ -99,7 +101,7 @@ defmodule Differ do
   end
 
   defp patch(:string, diff) do
-    Enum.reduce(diff, "", fn ({op, val}, new_str) ->
+    Enum.reduce(diff, "", fn {op, val}, new_str ->
       case op do
         :del -> new_str
         _ -> new_str <> val
@@ -108,7 +110,7 @@ defmodule Differ do
   end
 
   defp patch(:list, diff) do
-    Enum.reduce(diff, [], fn ({op, val}, new_list) ->
+    Enum.reduce(diff, [], fn {op, val}, new_list ->
       case op do
         :del -> new_list
         :diff -> new_list ++ [patch(val)]
@@ -118,7 +120,7 @@ defmodule Differ do
   end
 
   defp patch(:map, diff) do
-    Enum.reduce(diff, %{}, fn ({key, op, val}, new_map) ->
+    Enum.reduce(diff, %{}, fn {key, op, val}, new_map ->
       case op do
         :del -> new_map
         :diff -> Map.put(new_map, key, patch(val))
@@ -128,7 +130,7 @@ defmodule Differ do
   end
 
   defp revert(:string, diff) do
-    Enum.reduce(diff, "", fn ({op, val}, new_str) ->
+    Enum.reduce(diff, "", fn {op, val}, new_str ->
       case op do
         :ins -> new_str
         _ -> new_str <> val
@@ -137,7 +139,7 @@ defmodule Differ do
   end
 
   defp revert(:list, diff) do
-    Enum.reduce(diff, [], fn ({op, val}, new_list) ->
+    Enum.reduce(diff, [], fn {op, val}, new_list ->
       case op do
         :ins -> new_list
         :diff -> new_list ++ [revert(val)]
@@ -147,7 +149,7 @@ defmodule Differ do
   end
 
   defp revert(:map, diff) do
-    Enum.reduce(diff, %{}, fn ({key, op, val}, new_map) ->
+    Enum.reduce(diff, %{}, fn {key, op, val}, new_map ->
       case op do
         :ins -> new_map
         :diff -> Map.put(new_map, key, revert(val))
@@ -155,5 +157,4 @@ defmodule Differ do
       end
     end)
   end
-
 end
