@@ -70,20 +70,4 @@ defmodule DifferTest do
     assert old_str == Differ.revert(new_str, diff)
   end
 
-  # test "diffs are revertable" do
-  #   old_str = "My name is Dan"
-  #   new_str = "Hello, I'am Danila"
-  #
-  #   old_list = [old_str, 404, %{"pet" => "cat"}, [22, "22"]]
-  #   new_list = [new_str, 420, %{"pet" => "dog", "another" => "cat"}, [0, "0"]]
-  #
-  #   old_map = %{
-  #     "map" => %{
-  #       "key" => old_str,
-  #
-  #
-  #     }
-  #   }
-  #
-  # end
 end

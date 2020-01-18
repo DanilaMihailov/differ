@@ -106,6 +106,42 @@ defmodule Differ do
     end
   end
 
+  @doc """
+  Removes equal data from diffs
+
+  ## Examples
+      iex> regular_diff = Differ.compute(%{"same" => "same"}, %{"same" => "same", "new" => "val"})
+      [{"same", :eq, "same"}, {"new", :ins, "val"}]
+      iex> Differ.optimize_size(regular_diff)
+      [{"new", :ins, "val"}]
+
+      iex> diff = Differ.compute("Somewhat long string with a litle change there", "Somewhat long string with a litle change here")
+      [eq: "Somewhat long string with a litle change ", del: "t", eq: "here"]
+      iex> Differ.optimize_size(diff)
+      [skip: 41, del: "t", skip: 4]
+  """
+  @spec optimize_size(diff()) :: diff()
+  def optimize_size(diff) do
+    Enum.reduce(diff, [], fn change, acc ->
+      case change do
+        {:diff, ndiff} ->
+          acc ++ [{:diff, optimize_size(ndiff)}]
+
+        {:eq, val} when is_list(val) ->
+          acc ++ [{:skip, Enum.count(val)}]
+
+        {:eq, val} when is_binary(val) ->
+          acc ++ [{:skip, String.length(val)}]
+
+        {_key, :eq, _val} ->
+          acc
+
+        _ ->
+          acc ++ [change]
+      end
+    end)
+  end
+
   defp patch(:string, old_str, diff) do
     {str, _} =
       Enum.reduce(diff, {"", 0}, fn {op, val}, {new_str, index} ->
