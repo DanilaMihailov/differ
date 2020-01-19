@@ -7,16 +7,12 @@ defmodule MapDiff do
   Calculates diff beetwen maps
 
   ## Examples
+      
+      iex> MapDiff.diff(%{test: 1}, %{test: 1})
+      [eq: %{test: 1}]
 
-      iex> old_map = %{first_name: "Pam", last_name: "Beasly"}
-      iex> new_map = %{first_name: "Pam", last_name: "Halpert"}
-      iex> MapDiff.diff(old_map, new_map)
+      iex> MapDiff.diff(%{first_name: "Pam", last_name: "Beasly"}, %{first_name: "Pam", last_name: "Halpert"})
       [{:last_name, :ins, "Halpert"}, {:first_name, :eq, "Pam"}]
-
-      iex> old_map = %{first_name: "Jim", last_name: "Halpert"}
-      iex> new_map = %{first_name: "Jim", last_name: "Halpert"}
-      iex> MapDiff.diff(old_map, new_map)
-      [eq: %{first_name: "Jim", last_name: "Halpert"}]
   """
   @spec diff(map(), map()) :: [{any(), atom(), map()}]
   def diff(old_map, new_map)
