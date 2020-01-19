@@ -67,6 +67,7 @@ defmodule Differ.Map do
   @doc """
   Checks if given diff is for a map
   """
+  @spec map_diff?(Differ.diff()) :: boolean()
   def map_diff?(diff) when is_list(diff) do
     case diff do
       [{:remove, _num_or_key} | tail] -> map_diff?(tail)
@@ -77,10 +78,12 @@ defmodule Differ.Map do
   end
 
   @doc false
-  defp nested_noop(_diff), do: {:error, "Nested diffs are not supported, use Differ.Map.patch/3 function"}
+  defp nested_noop(_diff),
+    do: {:error, "Nested diffs are not supported, use Differ.Map.patch/3 function"}
 
   @doc false
-  defp nested_noop_revert(_diff), do: {:error, "Nested diffs are not supported, use Differ.Map.revert/3 function"}
+  defp nested_noop_revert(_diff),
+    do: {:error, "Nested diffs are not supported, use Differ.Map.revert/3 function"}
 
   def patch(old_map = %{}, diff) do
     patch(old_map, diff, false, &nested_noop/1)
@@ -140,4 +143,5 @@ defmodule Differ.Map do
     end
   end
 end
+
 H

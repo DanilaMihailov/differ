@@ -165,7 +165,11 @@ defmodule Differ do
         {:ok, obj}
 
       :list when is_list(obj) ->
-        patch(type, obj, diff, revert)
+        if revert do
+          Differ.List.revert(obj, diff, &apply_diff/3)
+        else
+          Differ.List.patch(obj, diff, &apply_diff/3)
+        end
 
       :string when is_binary(obj) ->
         patch(type, obj, diff, revert)
@@ -208,63 +212,6 @@ defmodule Differ do
     case result do
       {:error, _msg} -> result
       {str, _index} -> {:ok, str}
-    end
-  end
-
-  defp patch(:list, old_list, diff, revert) do
-    result =
-      Enum.reduce_while(diff, {[], 0}, fn {op, val}, {new_list, index} ->
-        new_index =
-          if is_list(val) do
-            Enum.count(val) + index
-          else
-            val + index
-          end
-
-        case {op, revert} do
-          {:del, false} ->
-            {:cont, {new_list, new_index}}
-
-          {:del, true} ->
-            {:cont, {new_list ++ val, index}}
-
-          {:eq, _} ->
-            {:cont, {new_list ++ val, new_index}}
-
-          {:ins, false} ->
-            {:cont, {new_list ++ val, index}}
-
-          {:ins, true} ->
-            {:cont, {new_list, new_index}}
-
-          {:diff, _} ->
-            patched = apply_diff(Enum.at(old_list, index), val, revert)
-
-            case patched do
-              {:ok, new_val} ->
-                {:cont, {new_list ++ [new_val], index}}
-
-              _ ->
-                {:halt, patched}
-            end
-
-          {:remove, false} ->
-            {:cont, {new_list, new_index}}
-
-          {:remove, true} ->
-            {:halt, {:error, "This diff is not revertable"}}
-
-          {:skip, _} ->
-            {:cont, {new_list ++ Enum.slice(old_list, index, val), new_index}}
-
-          _ ->
-            {:halt, {:error, "Unknown operation {#{op}, #{val}} for diff of type #{:list}"}}
-        end
-      end)
-
-    case result do
-      {:error, _msg} -> result
-      {list, _index} -> {:ok, list}
     end
   end
 end
