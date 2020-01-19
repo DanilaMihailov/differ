@@ -17,6 +17,7 @@ defmodule MapDiff do
   @spec diff(map(), map()) :: [{any(), atom(), map()}]
   def diff(old_map, new_map)
 
+  # TODO: check this, it works, but should not
   def diff(map, map), do: [eq: map]
 
   @doc """

@@ -59,6 +59,9 @@ defmodule Differ do
       iex> Differ.get_diff_type ["some list", %{}]
       :unknown
 
+      iex> Differ.get_diff_type [eq: %{test: 1}]
+      :map
+
   """
   @spec get_diff_type(diff()) :: :list | :map | :string | :unknown | :empty
   def get_diff_type(diff) do
