@@ -69,6 +69,14 @@ defmodule Differ.Map do
 
   @doc """
   Checks if given diff is for a map
+
+  ## Examples
+
+      iex> Differ.Map.map_diff?([eq: %{key: "val"}])
+      true
+
+      iex> Differ.Map.map_diff?([ins: [1], eq: [2, 3], del: [4]])
+      false
   """
   @spec map_diff?(Differ.diff()) :: boolean()
   def map_diff?(diff) when is_list(diff) do
@@ -88,18 +96,44 @@ defmodule Differ.Map do
   defp nested_noop_revert(_diff),
     do: {:error, "Nested diffs are not supported, use Differ.Map.revert/3 function"}
 
+  @doc """
+  Applies flat `diff` to a map
+
+  If diff has nested changes, returns `{:error, reason}`. If you have nested diffs use `Differ.Map.patch/3`
+
+  ## Examples
+
+      iex> Differ.Map.patch(%{name: "Dan"}, [{:name, :ins, "Danila"}])
+      {:ok, %{name: "Danila"}}
+  """
+  @spec patch(map(), Differ.diff()) :: {:ok, map()} | {:error, String.t()}
   def patch(old_map = %{}, diff) do
     patch(old_map, diff, false, &nested_noop/1)
   end
 
+  @doc """
+  Applies `diff` to a map, using `nested_patcher` for nested changes
+
+  ## Examples
+
+      iex> Differ.Map.patch(%{name: "Dan"}, [{:name, :diff, [eq: "Dan", ins: "ila"]}], fn(a,b,_) -> Differ.String.patch(a, b) end)
+      {:ok, %{name: "Danila"}}
+  """
+  @spec patch(map(), Differ.diff(), (any(), any() -> any() | nil)) ::
+          {:ok, map()} | {:error, String.t()}
   def patch(old_map = %{}, diff, nested_patcher) do
     patch(old_map, diff, false, nested_patcher)
   end
 
+  @doc "Opposite of `Differ.Map.patch/2`"
+  @spec revert(map(), Differ.diff()) :: {:ok, map()} | {:error, String.t()}
   def revert(old_map = %{}, diff) do
     patch(old_map, diff, true, &nested_noop_revert/1)
   end
 
+  @doc "Opposite of `Differ.Map.patch/3`"
+  @spec revert(map(), Differ.diff(), (any(), any() -> any() | nil)) ::
+          {:ok, map()} | {:error, String.t()}
   def revert(old_map = %{}, diff, nested_patcher) do
     patch(old_map, diff, true, nested_patcher)
   end
