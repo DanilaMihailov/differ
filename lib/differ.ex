@@ -38,7 +38,7 @@ defmodule Differ do
       old == new -> [eq: new]
       is_list(new) -> List.myers_difference(old, new, &diff/2)
       is_map(new) -> Differ.Map.diff(old, new, &diff/2)
-      is_binary(new) -> String.myers_difference(old, new)
+      is_bitstring(new) -> String.myers_difference(old, new)
       true -> nil
     end
   end
@@ -70,7 +70,7 @@ defmodule Differ do
       [{:remove, _num} | tail] -> get_diff_type(tail)
       [{:diff, _val} | _] -> :list
       [{_key, _op, _val} | _] -> :map
-      [{_op, val} | _] when is_binary(val) -> :string
+      [{_op, val} | _] when is_bitstring(val) -> :string
       [{_op, val} | _] when is_list(val) -> :list
       [] -> :empty
       _ -> :unknown
@@ -136,10 +136,10 @@ defmodule Differ do
         {:del, val} when is_list(val) and not revertable ->
           acc ++ [{:remove, Enum.count(val)}]
 
-        {:eq, val} when is_binary(val) ->
+        {:eq, val} when is_bitstring(val) ->
           acc ++ [{:skip, String.length(val)}]
 
-        {:del, val} when is_binary(val) and not revertable ->
+        {:del, val} when is_bitstring(val) and not revertable ->
           acc ++ [{:remove, String.length(val)}]
 
         {_key, :eq, _val} ->
@@ -171,8 +171,12 @@ defmodule Differ do
           Differ.List.patch(obj, diff, &apply_diff/3)
         end
 
-      :string when is_binary(obj) ->
-        patch(type, obj, diff, revert)
+      :string when is_bitstring(obj) ->
+        if revert do
+          Differ.String.revert(obj, diff)
+        else
+          Differ.String.patch(obj, diff)
+        end
 
       :map when is_map(obj) ->
         if revert do
@@ -183,35 +187,6 @@ defmodule Differ do
 
       _ ->
         {:error, "Diff type and obj type do not match"}
-    end
-  end
-
-  defp patch(:string, old_str, diff, revert) do
-    result =
-      Enum.reduce_while(diff, {"", 0}, fn {op, val}, {new_str, index} ->
-        new_index =
-          if is_binary(val) do
-            String.length(val) + index
-          else
-            val + index
-          end
-
-        case {op, revert} do
-          {:del, false} -> {:cont, {new_str, new_index}}
-          {:del, true} -> {:cont, {new_str <> val, index}}
-          {:eq, _} -> {:cont, {new_str <> val, new_index}}
-          {:ins, false} -> {:cont, {new_str <> val, index}}
-          {:ins, true} -> {:cont, {new_str, new_index}}
-          {:remove, false} -> {:cont, {new_str, new_index}}
-          {:remove, true} -> {:halt, {:error, "This diff is not revertable"}}
-          {:skip, _} -> {:cont, {new_str <> String.slice(old_str, index, val), new_index}}
-          _ -> {:halt, {:error, "Unknown operation {#{op}, #{val}} for diff of type #{:string}"}}
-        end
-      end)
-
-    case result do
-      {:error, _msg} -> result
-      {str, _index} -> {:ok, str}
     end
   end
 end
