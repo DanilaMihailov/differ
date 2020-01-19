@@ -1,4 +1,4 @@
-defmodule MapDiff do
+defmodule Differ.Map do
   @moduledoc """
   Calculates diff beetwen maps
   """
@@ -8,10 +8,10 @@ defmodule MapDiff do
 
   ## Examples
       
-      iex> MapDiff.diff(%{test: 1}, %{test: 1})
+      iex> Differ.Map.diff(%{test: 1}, %{test: 1})
       [eq: %{test: 1}]
 
-      iex> MapDiff.diff(%{first_name: "Pam", last_name: "Beasly"}, %{first_name: "Pam", last_name: "Halpert"})
+      iex> Differ.Map.diff(%{first_name: "Pam", last_name: "Beasly"}, %{first_name: "Pam", last_name: "Halpert"})
       [{:last_name, :ins, "Halpert"}, {:first_name, :eq, "Pam"}]
   """
   @spec diff(map(), map()) :: [{any(), atom(), map()}]
@@ -27,7 +27,7 @@ defmodule MapDiff do
 
       iex> old_map = %{first_name: "Pam", last_name: "Beasly"}
       iex> new_map = %{first_name: "Pam", last_name: "Halpert"}
-      iex> MapDiff.diff(old_map, new_map, &String.myers_difference/2)
+      iex> Differ.Map.diff(old_map, new_map, &String.myers_difference/2)
       [{:last_name, :diff, [del: "Be", ins: "H", eq: "a", del: "s", eq: "l", del: "y", ins: "pert"]}, {:first_name, :eq, "Pam"}]
   """
   @spec diff(map(), map(), (Differ.diffable(), Differ.diffable() -> Differ.diff() | nil)) ::
@@ -64,3 +64,4 @@ defmodule MapDiff do
     end)
   end
 end
+H

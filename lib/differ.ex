@@ -37,7 +37,7 @@ defmodule Differ do
     cond do
       old == new -> [eq: new]
       is_list(new) -> List.myers_difference(old, new, &diff/2)
-      is_map(new) -> MapDiff.diff(old, new, &diff/2)
+      is_map(new) -> Differ.Map.diff(old, new, &diff/2)
       is_binary(new) -> String.myers_difference(old, new)
       true -> nil
     end
@@ -59,8 +59,8 @@ defmodule Differ do
       iex> Differ.get_diff_type ["some list", %{}]
       :unknown
 
-      iex> Differ.get_diff_type [eq: %{test: 1}]
-      :map
+      # iex> Differ.get_diff_type [eq: %{test: 1}]
+      # :map
 
   """
   @spec get_diff_type(diff()) :: :list | :map | :string | :unknown | :empty

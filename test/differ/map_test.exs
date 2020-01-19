@@ -1,6 +1,6 @@
-defmodule MapDiffTest do
+defmodule Differ.MapTest do
   use ExUnit.Case
-  doctest MapDiff
+  doctest Differ.Map
 
   test "simple" do
     old_map = %{
@@ -15,7 +15,7 @@ defmodule MapDiffTest do
       "other" => 1
     }
 
-    output = MapDiff.diff(old_map, new_map)
+    output = Differ.Map.diff(old_map, new_map)
 
     expected_output = [
       {"other", :eq, 1},
@@ -29,7 +29,7 @@ defmodule MapDiffTest do
 
   defp differ(old, new) do
     cond do
-      is_map(new) -> MapDiff.diff(old, new, &differ/2)
+      is_map(new) -> Differ.Map.diff(old, new, &differ/2)
       is_binary(new) -> String.myers_difference(old, new)
       true -> [eq: new]
     end
@@ -58,7 +58,7 @@ defmodule MapDiffTest do
       }
     }
 
-    output = MapDiff.diff(old_map, new_map, &differ/2)
+    output = Differ.Map.diff(old_map, new_map, &differ/2)
 
     expected_output = [
       {"other", :eq, 1},
