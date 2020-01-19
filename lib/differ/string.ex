@@ -3,7 +3,7 @@ defmodule Differ.String do
     String.myers_difference(old_string, new_string)
   end
 
-  def string_diff?(diff) when is_bitstring(diff) do
+  def string_diff?(diff) when is_list(diff) do
     case diff do
       [{:skip, _num} | tail] -> string_diff?(tail)
       [{:remove, _num} | tail] -> string_diff?(tail)

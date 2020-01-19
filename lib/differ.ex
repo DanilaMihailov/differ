@@ -59,21 +59,18 @@ defmodule Differ do
       iex> Differ.get_diff_type ["some list", %{}]
       :unknown
 
-      # iex> Differ.get_diff_type [eq: %{test: 1}]
-      # :map
+      iex> Differ.get_diff_type [eq: %{test: 1}]
+      :map
 
   """
   @spec get_diff_type(diff()) :: :list | :map | :string | :unknown | :empty
   def get_diff_type(diff) do
-    case diff do
-      [{:skip, _num} | tail] -> get_diff_type(tail)
-      [{:remove, _num} | tail] -> get_diff_type(tail)
-      [{:diff, _val} | _] -> :list
-      [{_key, _op, _val} | _] -> :map
-      [{_op, val} | _] when is_bitstring(val) -> :string
-      [{_op, val} | _] when is_list(val) -> :list
-      [] -> :empty
-      _ -> :unknown
+    cond do
+      List.first(diff) == nil -> :empty
+      Differ.List.list_diff?(diff) -> :list
+      Differ.String.string_diff?(diff) -> :string
+      Differ.Map.map_diff?(diff) -> :map
+      true -> :unknown
     end
   end
 
