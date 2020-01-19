@@ -36,9 +36,9 @@ defmodule Differ do
   def diff(old, new) do
     cond do
       old == new -> [eq: new]
-      is_list(new) -> List.myers_difference(old, new, &diff/2)
-      is_map(new) -> MapDiff.diff(old, new, &diff/2)
-      is_binary(new) -> String.myers_difference(old, new)
+      is_list(new) -> Differ.List.diff(old, new, &diff/2)
+      is_map(new) -> Differ.Map.diff(old, new, &diff/2)
+      is_bitstring(new) -> Differ.String.diff(old, new)
       true -> nil
     end
   end
@@ -65,15 +65,12 @@ defmodule Differ do
   """
   @spec get_diff_type(diff()) :: :list | :map | :string | :unknown | :empty
   def get_diff_type(diff) do
-    case diff do
-      [{:skip, _num} | tail] -> get_diff_type(tail)
-      [{:remove, _num} | tail] -> get_diff_type(tail)
-      [{:diff, _val} | _] -> :list
-      [{_key, _op, _val} | _] -> :map
-      [{_op, val} | _] when is_binary(val) -> :string
-      [{_op, val} | _] when is_list(val) -> :list
-      [] -> :empty
-      _ -> :unknown
+    cond do
+      List.first(diff) == nil -> :empty
+      Differ.List.list_diff?(diff) -> :list
+      Differ.String.string_diff?(diff) -> :string
+      Differ.Map.map_diff?(diff) -> :map
+      true -> :unknown
     end
   end
 
@@ -136,10 +133,10 @@ defmodule Differ do
         {:del, val} when is_list(val) and not revertable ->
           acc ++ [{:remove, Enum.count(val)}]
 
-        {:eq, val} when is_binary(val) ->
+        {:eq, val} when is_bitstring(val) ->
           acc ++ [{:skip, String.length(val)}]
 
-        {:del, val} when is_binary(val) and not revertable ->
+        {:del, val} when is_bitstring(val) and not revertable ->
           acc ++ [{:remove, String.length(val)}]
 
         {_key, :eq, _val} ->
@@ -165,144 +162,28 @@ defmodule Differ do
         {:ok, obj}
 
       :list when is_list(obj) ->
-        patch(type, obj, diff, revert)
+        if revert do
+          Differ.List.revert(obj, diff, &apply_diff/3)
+        else
+          Differ.List.patch(obj, diff, &apply_diff/3)
+        end
 
-      :string when is_binary(obj) ->
-        patch(type, obj, diff, revert)
+      :string when is_bitstring(obj) ->
+        if revert do
+          Differ.String.revert(obj, diff)
+        else
+          Differ.String.patch(obj, diff)
+        end
 
       :map when is_map(obj) ->
-        patch(type, obj, diff, revert)
+        if revert do
+          Differ.Map.revert(obj, diff, &apply_diff/3)
+        else
+          Differ.Map.patch(obj, diff, &apply_diff/3)
+        end
 
       _ ->
         {:error, "Diff type and obj type do not match"}
-    end
-  end
-
-  defp patch(:string, old_str, diff, revert) do
-    result =
-      Enum.reduce_while(diff, {"", 0}, fn {op, val}, {new_str, index} ->
-        new_index =
-          if is_binary(val) do
-            String.length(val) + index
-          else
-            val + index
-          end
-
-        case {op, revert} do
-          {:del, false} -> {:cont, {new_str, new_index}}
-          {:del, true} -> {:cont, {new_str <> val, index}}
-          {:eq, _} -> {:cont, {new_str <> val, new_index}}
-          {:ins, false} -> {:cont, {new_str <> val, index}}
-          {:ins, true} -> {:cont, {new_str, new_index}}
-          {:remove, false} -> {:cont, {new_str, new_index}}
-          {:remove, true} -> {:halt, {:error, "This diff is not revertable"}}
-          {:skip, _} -> {:cont, {new_str <> String.slice(old_str, index, val), new_index}}
-          _ -> {:halt, {:error, "Unknown operation {#{op}, #{val}} for diff of type #{:string}"}}
-        end
-      end)
-
-    case result do
-      {:error, _msg} -> result
-      {str, _index} -> {:ok, str}
-    end
-  end
-
-  defp patch(:list, old_list, diff, revert) do
-    result =
-      Enum.reduce_while(diff, {[], 0}, fn {op, val}, {new_list, index} ->
-        new_index =
-          if is_list(val) do
-            Enum.count(val) + index
-          else
-            val + index
-          end
-
-        case {op, revert} do
-          {:del, false} ->
-            {:cont, {new_list, new_index}}
-
-          {:del, true} ->
-            {:cont, {new_list ++ val, index}}
-
-          {:eq, _} ->
-            {:cont, {new_list ++ val, new_index}}
-
-          {:ins, false} ->
-            {:cont, {new_list ++ val, index}}
-
-          {:ins, true} ->
-            {:cont, {new_list, new_index}}
-
-          {:diff, _} ->
-            patched = apply_diff(Enum.at(old_list, index), val, revert)
-
-            case patched do
-              {:ok, new_val} ->
-                {:cont, {new_list ++ [new_val], index}}
-
-              _ ->
-                {:halt, patched}
-            end
-
-          {:remove, false} ->
-            {:cont, {new_list, new_index}}
-
-          {:remove, true} ->
-            {:halt, {:error, "This diff is not revertable"}}
-
-          {:skip, _} ->
-            {:cont, {new_list ++ Enum.slice(old_list, index, val), new_index}}
-
-          _ ->
-            {:halt, {:error, "Unknown operation {#{op}, #{val}} for diff of type #{:list}"}}
-        end
-      end)
-
-    case result do
-      {:error, _msg} -> result
-      {list, _index} -> {:ok, list}
-    end
-  end
-
-  defp patch(:map, old_map, diff, revert) do
-    map =
-      Enum.reduce_while(diff, old_map, fn {key, op, val}, new_map ->
-        case {op, revert} do
-          {:del, false} ->
-            {:cont, Map.delete(new_map, key)}
-
-          {:del, true} ->
-            {:cont, Map.put(new_map, key, val)}
-
-          {:eq, _} ->
-            {:cont, new_map}
-
-          {:ins, false} ->
-            {:cont, Map.put(new_map, key, val)}
-
-          {:ins, true} ->
-            {:cont, Map.delete(new_map, key)}
-
-          {:diff, _} ->
-            patched = apply_diff(Map.get(new_map, key), val, revert)
-
-            case patched do
-              {:ok, new_val} ->
-                {:cont, Map.put(new_map, key, new_val)}
-
-              {:error, _msg} ->
-                {:halt, patched}
-            end
-
-          _ ->
-            {:halt,
-             {:error, "Unknown operation {#{key}, #{op}, #{val}} for diff of type #{:map}"}}
-        end
-      end)
-
-    case map do
-      {:error, _msg} -> map
-      _ -> {:ok, map}
     end
   end
 end
