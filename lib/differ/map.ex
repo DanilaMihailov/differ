@@ -3,6 +3,11 @@ defmodule Differ.Map do
   Calculates diff beetwen maps
   """
 
+  @doc false
+  defp noop_differ(_, _), do: nil
+
+  def diff(map, map), do: [eq: map]
+
   @doc """
   Calculates diff beetwen maps
 
@@ -14,10 +19,10 @@ defmodule Differ.Map do
       iex> Differ.Map.diff(%{first_name: "Pam", last_name: "Beasly"}, %{first_name: "Pam", last_name: "Halpert"})
       [{:last_name, :ins, "Halpert"}, {:first_name, :eq, "Pam"}]
   """
-  @spec diff(map(), map()) :: [{any(), atom(), map()}]
-  def diff(old_map, new_map)
-
-  def diff(map, map), do: [eq: map]
+  @spec diff(map(), map()) :: Differ.diff()
+  def diff(old_map, new_map) do
+    diff(old_map, new_map, &noop_differ/2)
+  end
 
   @doc """
   Calculates diff beetwen maps using diffing function
@@ -29,9 +34,8 @@ defmodule Differ.Map do
       iex> Differ.Map.diff(old_map, new_map, &String.myers_difference/2)
       [{:last_name, :diff, [del: "Be", ins: "H", eq: "a", del: "s", eq: "l", del: "y", ins: "pert"]}, {:first_name, :eq, "Pam"}]
   """
-  @spec diff(map(), map(), (Differ.diffable(), Differ.diffable() -> Differ.diff() | nil)) ::
-          Differ.diff()
-  def diff(old_map, new_map, differ \\ fn _old, _new -> nil end) do
+  @spec diff(map(), map(), (any(), any() -> Differ.diff() | nil)) :: Differ.diff()
+  def diff(old_map, new_map, differ) do
     old_keys = Map.keys(old_map) |> MapSet.new()
     new_keys = Map.keys(new_map) |> MapSet.new()
 
