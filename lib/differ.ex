@@ -9,13 +9,16 @@ defmodule Differ do
   * `:ins` - insert
   * `:eq` - doesnt change
   * `:diff` - nested diff that should be applied
+  * `:skip` - skip number of characters or elements
+  * `:remove` - remove number of characters or elements (Non-revertable)
   """
-  @type operator() :: :del | :ins | :eq | :diff
+  @type operator() :: :del | :ins | :eq | :diff | :skip | :remove
 
   @typedoc """
   Defines operator and value that need to be applied with operator
   ## Examples
       {:del, "s"}
+      {:skip, 4}
       {"key", :ins, "s"}
   """
   @type operation() :: {operator(), any} | {any, operator(), any}
