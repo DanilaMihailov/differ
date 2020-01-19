@@ -12,6 +12,11 @@ defmodule MapDiff do
       iex> new_map = %{first_name: "Pam", last_name: "Halpert"}
       iex> MapDiff.diff(old_map, new_map)
       [{:last_name, :ins, "Halpert"}, {:first_name, :eq, "Pam"}]
+
+      iex> old_map = %{first_name: "Jim", last_name: "Halpert"}
+      iex> new_map = %{first_name: "Jim", last_name: "Halpert"}
+      iex> MapDiff.diff(old_map, new_map)
+      [eq: %{first_name: "Jim", last_name: "Halpert"}]
   """
   @spec diff(map(), map()) :: [{any(), atom(), map()}]
   def diff(old_map, new_map)
