@@ -63,5 +63,81 @@ defmodule Differ.Map do
       end
     end)
   end
+
+  @doc """
+  Checks if given diff is for a map
+  """
+  def map_diff?(diff) when is_list(diff) do
+    case diff do
+      [{:remove, _num_or_key} | tail] -> map_diff?(tail)
+      [{_key, op, _val} | _] when is_atom(op) -> true
+      [eq: val] when is_map(val) -> true
+      _ -> false
+    end
+  end
+
+  @doc false
+  defp nested_noop(_diff), do: {:error, "Nested diffs are not supported, use Differ.Map.patch/3 function"}
+
+  @doc false
+  defp nested_noop_revert(_diff), do: {:error, "Nested diffs are not supported, use Differ.Map.revert/3 function"}
+
+  def patch(old_map = %{}, diff) do
+    patch(old_map, diff, false, &nested_noop/1)
+  end
+
+  def patch(old_map = %{}, diff, nested_patcher) do
+    patch(old_map, diff, false, nested_patcher)
+  end
+
+  def revert(old_map = %{}, diff) do
+    patch(old_map, diff, true, &nested_noop_revert/1)
+  end
+
+  def revert(old_map = %{}, diff, nested_patcher) do
+    patch(old_map, diff, true, nested_patcher)
+  end
+
+  defp patch(old_map, diff, revert, nested_patcher) do
+    map =
+      Enum.reduce_while(diff, old_map, fn {key, op, val}, new_map ->
+        case {op, revert} do
+          {:del, false} ->
+            {:cont, Map.delete(new_map, key)}
+
+          {:del, true} ->
+            {:cont, Map.put(new_map, key, val)}
+
+          {:eq, _} ->
+            {:cont, new_map}
+
+          {:ins, false} ->
+            {:cont, Map.put(new_map, key, val)}
+
+          {:ins, true} ->
+            {:cont, Map.delete(new_map, key)}
+
+          {:diff, _} ->
+            patched = nested_patcher.(Map.get(new_map, key), val, revert)
+
+            case patched do
+              {:ok, new_val} ->
+                {:cont, Map.put(new_map, key, new_val)}
+
+              {:error, _msg} ->
+                {:halt, patched}
+            end
+
+          _ ->
+            {:halt,
+             {:error, "Unknown operation {#{key}, #{op}, #{val}} for diff of type #{:map}"}}
+        end
+      end)
+
+    case map do
+      {:error, _msg} -> map
+      _ -> {:ok, map}
+    end
+  end
 end
 H

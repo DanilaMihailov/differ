@@ -171,7 +171,11 @@ defmodule Differ do
         patch(type, obj, diff, revert)
 
       :map when is_map(obj) ->
-        patch(type, obj, diff, revert)
+        if revert do
+          Differ.Map.revert(obj, diff, &apply_diff/3)
+        else
+          Differ.Map.patch(obj, diff, &apply_diff/3)
+        end
 
       _ ->
         {:error, "Diff type and obj type do not match"}
@@ -261,48 +265,6 @@ defmodule Differ do
     case result do
       {:error, _msg} -> result
       {list, _index} -> {:ok, list}
-    end
-  end
-
-  defp patch(:map, old_map, diff, revert) do
-    map =
-      Enum.reduce_while(diff, old_map, fn {key, op, val}, new_map ->
-        case {op, revert} do
-          {:del, false} ->
-            {:cont, Map.delete(new_map, key)}
-
-          {:del, true} ->
-            {:cont, Map.put(new_map, key, val)}
-
-          {:eq, _} ->
-            {:cont, new_map}
-
-          {:ins, false} ->
-            {:cont, Map.put(new_map, key, val)}
-
-          {:ins, true} ->
-            {:cont, Map.delete(new_map, key)}
-
-          {:diff, _} ->
-            patched = apply_diff(Map.get(new_map, key), val, revert)
-
-            case patched do
-              {:ok, new_val} ->
-                {:cont, Map.put(new_map, key, new_val)}
-
-              {:error, _msg} ->
-                {:halt, patched}
-            end
-
-          _ ->
-            {:halt,
-             {:error, "Unknown operation {#{key}, #{op}, #{val}} for diff of type #{:map}"}}
-        end
-      end)
-
-    case map do
-      {:error, _msg} -> map
-      _ -> {:ok, map}
     end
   end
 end
