@@ -194,6 +194,7 @@ defmodule Differ do
           {:remove, false} -> {:cont, {new_str, new_index}}
           {:remove, true} -> {:halt, {:error, "This diff is not revertable"}}
           {:skip, _} -> {:cont, {new_str <> String.slice(old_str, index, val), new_index}}
+          _ -> {:halt, {:error, "Unknown operation {#{op}, #{val}} for diff of type #{:string}"}}
         end
       end)
 
@@ -250,7 +251,7 @@ defmodule Differ do
             {:cont, {new_list ++ Enum.slice(old_list, index, val), new_index}}
 
           _ ->
-            {:halt, {:error, "Unknown operation #{op} for diff of type #{:list}"}}
+            {:halt, {:error, "Unknown operation {#{op}, #{val}} for diff of type #{:list}"}}
         end
       end)
 
@@ -291,7 +292,8 @@ defmodule Differ do
             end
 
           _ ->
-            {:halt, {:error, "Unknown operation #{op} for diff of type #{:map}"}}
+            {:halt,
+             {:error, "Unknown operation {#{key}, #{op}, #{val}} for diff of type #{:map}"}}
         end
       end)
 
