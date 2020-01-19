@@ -57,8 +57,8 @@ defmodule DifferTest do
     new_str = "Hello, I'am Danila"
 
     diff = Differ.diff(old_str, new_str)
-    op_diff = Differ.optimize_size(diff)
-    non_rev_diff = Differ.optimize_size(diff, false)
+    op_diff = Differ.optimize(diff)
+    non_rev_diff = Differ.optimize(diff, false)
 
     assert {:ok, new_str} == Differ.patch(old_str, diff)
     assert {:ok, new_str} == Differ.patch(old_str, op_diff)
@@ -70,8 +70,8 @@ defmodule DifferTest do
     new_str = "Hello, I'am Danila"
 
     diff = Differ.diff(old_str, new_str)
-    op_diff = Differ.optimize_size(diff)
-    non_rev_diff = Differ.optimize_size(diff, false)
+    op_diff = Differ.optimize(diff)
+    non_rev_diff = Differ.optimize(diff, false)
 
     assert {:ok, old_str} == Differ.revert(new_str, diff)
     assert {:ok, old_str} == Differ.revert(new_str, op_diff)
@@ -82,7 +82,7 @@ defmodule DifferTest do
     old_str = "Hello, "
     new_str = "Hello, World!"
 
-    diff = Differ.diff(old_str, new_str) |> Differ.optimize_size(false)
+    diff = Differ.diff(old_str, new_str) |> Differ.optimize(false)
 
     assert {:ok, old_str} == Differ.revert(new_str, diff)
   end

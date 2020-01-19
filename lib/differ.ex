@@ -109,23 +109,23 @@ defmodule Differ do
   ## Examples
       iex> regular_diff = Differ.diff(%{"same" => "same"}, %{"same" => "same", "new" => "val"})
       [{"same", :eq, "same"}, {"new", :ins, "val"}]
-      iex> Differ.optimize_size(regular_diff)
+      iex> Differ.optimize(regular_diff)
       [{"new", :ins, "val"}]
 
       iex> diff = Differ.diff("Somewhat long string with a litle change there", "Somewhat long string with a litle change here")
       [eq: "Somewhat long string with a litle change ", del: "t", eq: "here"]
-      iex> Differ.optimize_size(diff)
+      iex> Differ.optimize(diff)
       [skip: 41, del: "t", skip: 4]
   """
-  @spec optimize_size(diff(), boolean()) :: diff()
-  def optimize_size(diff, revertable \\ true) do
+  @spec optimize(diff(), boolean()) :: diff()
+  def optimize(diff, revertable \\ true) do
     Enum.reduce(diff, [], fn change, acc ->
       case change do
         {:diff, ndiff} ->
-          acc ++ [{:diff, optimize_size(ndiff, revertable)}]
+          acc ++ [{:diff, optimize(ndiff, revertable)}]
 
         {key, :diff, ndiff} ->
-          acc ++ [{key, :diff, optimize_size(ndiff, revertable)}]
+          acc ++ [{key, :diff, optimize(ndiff, revertable)}]
 
         {:eq, val} when is_list(val) ->
           acc ++ [{:skip, Enum.count(val)}]
