@@ -20,21 +20,21 @@ defmodule Differ do
   """
   @type operation() :: {operator(), any} | {any, operator(), any}
 
-  @typedoc "Types that supported by `Differ.compute/2`"
+  @typedoc "Types that supported by `Differ.diff/2`"
   @type diffable() :: String.t() | number() | %{any() => diffable()} | list(diffable())
 
   @typedoc "List of operations need to be applied"
   @type diff() :: list(operation())
 
   @doc """
-  Computes diff between 2 objects of same type
+  Returns diff between 2 objects of same type
   """
-  @spec compute(diffable(), diffable()) :: diff()
-  def compute(old, new) do
+  @spec diff(diffable(), diffable()) :: diff()
+  def diff(old, new) do
     cond do
       old == new -> [eq: new]
-      is_list(new) -> List.myers_difference(old, new, &compute/2)
-      is_map(new) -> MapDiff.diff(old, new, &compute/2)
+      is_list(new) -> List.myers_difference(old, new, &diff/2)
+      is_map(new) -> MapDiff.diff(old, new, &diff/2)
       is_binary(new) -> String.myers_difference(old, new)
       true -> nil
     end
@@ -71,7 +71,7 @@ defmodule Differ do
 
   ## Examples
       iex(1)> old_list = ["22", "1"]
-      iex(1)> diff = Differ.compute old_list, ["2", "1", "3"]
+      iex(1)> diff = Differ.diff old_list, ["2", "1", "3"]
       iex(2)> Differ.patch old_list, diff
       ["2", "1", "3"]
   """
@@ -92,7 +92,7 @@ defmodule Differ do
   ## Examples
       iex(1)> old_list = ["22", "1"]
       iex(1)> new_list = ["2", "1", "3"]
-      iex(1)> diff = Differ.compute old_list, new_list 
+      iex(1)> diff = Differ.diff old_list, new_list 
       iex(2)> Differ.revert new_list, diff
       ["22", "1"]
   """
@@ -110,12 +110,12 @@ defmodule Differ do
   Removes equal data from diffs
 
   ## Examples
-      iex> regular_diff = Differ.compute(%{"same" => "same"}, %{"same" => "same", "new" => "val"})
+      iex> regular_diff = Differ.diff(%{"same" => "same"}, %{"same" => "same", "new" => "val"})
       [{"same", :eq, "same"}, {"new", :ins, "val"}]
       iex> Differ.optimize_size(regular_diff)
       [{"new", :ins, "val"}]
 
-      iex> diff = Differ.compute("Somewhat long string with a litle change there", "Somewhat long string with a litle change here")
+      iex> diff = Differ.diff("Somewhat long string with a litle change there", "Somewhat long string with a litle change here")
       [eq: "Somewhat long string with a litle change ", del: "t", eq: "here"]
       iex> Differ.optimize_size(diff)
       [skip: 41, del: "t", skip: 4]

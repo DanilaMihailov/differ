@@ -30,7 +30,7 @@ defmodule DifferTest do
       }
     }
 
-    output = Differ.compute(old_map, new_map)
+    output = Differ.diff(old_map, new_map)
 
     expected_output = [
       {"same", :eq, 1},
@@ -56,7 +56,7 @@ defmodule DifferTest do
     old_str = "My name is Dan"
     new_str = "Hello, I'am Danila"
 
-    diff = Differ.compute(old_str, new_str)
+    diff = Differ.diff(old_str, new_str)
     op_diff = Differ.optimize_size(diff)
     non_rev_diff = Differ.optimize_size(diff, false)
 
@@ -69,7 +69,7 @@ defmodule DifferTest do
     old_str = "My name is Dan"
     new_str = "Hello, I'am Danila"
 
-    diff = Differ.compute(old_str, new_str)
+    diff = Differ.diff(old_str, new_str)
     op_diff = Differ.optimize_size(diff)
     non_rev_diff = Differ.optimize_size(diff, false)
 
@@ -82,7 +82,7 @@ defmodule DifferTest do
     old_str = "Hello, "
     new_str = "Hello, World!"
 
-    diff = Differ.compute(old_str, new_str) |> Differ.optimize_size(false)
+    diff = Differ.diff(old_str, new_str) |> Differ.optimize_size(false)
 
     assert old_str == Differ.revert(new_str, diff)
   end
