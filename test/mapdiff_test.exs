@@ -15,7 +15,7 @@ defmodule MapDiffTest do
       "other" => 1
     }
 
-    output = MapDiff.compute(old_map, new_map)
+    output = MapDiff.diff(old_map, new_map)
 
     expected_output = [
       {"other", :eq, 1},
@@ -29,7 +29,7 @@ defmodule MapDiffTest do
 
   defp differ(old, new) do
     cond do
-      is_map(new) -> MapDiff.compute(old, new, &differ/2)
+      is_map(new) -> MapDiff.diff(old, new, &differ/2)
       is_binary(new) -> String.myers_difference(old, new)
       true -> [eq: new]
     end
@@ -58,7 +58,7 @@ defmodule MapDiffTest do
       }
     }
 
-    output = MapDiff.compute(old_map, new_map, &differ/2)
+    output = MapDiff.diff(old_map, new_map, &differ/2)
 
     expected_output = [
       {"other", :eq, 1},

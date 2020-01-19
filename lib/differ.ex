@@ -34,7 +34,7 @@ defmodule Differ do
     cond do
       old == new -> [eq: new]
       is_list(new) -> List.myers_difference(old, new, &compute/2)
-      is_map(new) -> MapDiff.compute(old, new, &compute/2)
+      is_map(new) -> MapDiff.diff(old, new, &compute/2)
       is_binary(new) -> String.myers_difference(old, new)
       true -> nil
     end

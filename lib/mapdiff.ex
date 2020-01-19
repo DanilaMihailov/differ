@@ -8,45 +8,29 @@ defmodule MapDiff do
 
   ## Examples
 
-      iex> old_map = %{
-      ...>  "changed" => "sval", 
-      ...>  "removed" => "sf", 
-      ...>  "other" => 1
-      ...> }
-      iex> new_map = %{
-      ...>  "changed" => "xval", 
-      ...>  "added" => "new", 
-      ...>  "other" => 1
-      ...> }
-      iex> MapDiff.compute(old_map, new_map)
-      [{"other", :eq, 1}, {"changed", :ins, "xval"}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
+      iex> old_map = %{first_name: "Pam", last_name: "Beasly"}
+      iex> new_map = %{first_name: "Pam", last_name: "Halpert"}
+      iex> MapDiff.diff(old_map, new_map)
+      [{:last_name, :ins, "Halpert"}, {:first_name, :eq, "Pam"}]
   """
-  @spec compute(map(), map()) :: [{any(), atom(), map()}]
-  def compute(old_map, new_map)
+  @spec diff(map(), map()) :: [{any(), atom(), map()}]
+  def diff(old_map, new_map)
 
-  def compute(map, map), do: [eq: map]
+  def diff(map, map), do: [eq: map]
 
   @doc """
   Calculates diff beetwen maps using diffing function
 
   ## Examples
 
-      iex> old_map = %{
-      ...>  "changed" => "sval", 
-      ...>  "removed" => "sf", 
-      ...>  "other" => "same string"
-      ...> }
-      iex> new_map = %{
-      ...>  "changed" => "xval", 
-      ...>  "added" => "new", 
-      ...>  "other" => "same string"
-      ...> }
-      iex> MapDiff.compute(old_map, new_map, &String.myers_difference/2)
-      [{"other", :eq, "same string"}, {"changed", :diff, [del: "s", ins: "x", eq: "val"]}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
+      iex> old_map = %{first_name: "Pam", last_name: "Beasly"}
+      iex> new_map = %{first_name: "Pam", last_name: "Halpert"}
+      iex> MapDiff.diff(old_map, new_map, &String.myers_difference/2)
+      [{:last_name, :diff, [del: "Be", ins: "H", eq: "a", del: "s", eq: "l", del: "y", ins: "pert"]}, {:first_name, :eq, "Pam"}]
   """
-  @spec compute(map(), map(), (Differ.diffable(), Differ.diffable() -> Differ.diff() | nil)) ::
+  @spec diff(map(), map(), (Differ.diffable(), Differ.diffable() -> Differ.diff() | nil)) ::
           Differ.diff()
-  def compute(old_map, new_map, differ \\ fn _old, _new -> nil end) do
+  def diff(old_map, new_map, differ \\ fn _old, _new -> nil end) do
     old_keys = Map.keys(old_map) |> MapSet.new()
     new_keys = Map.keys(new_map) |> MapSet.new()
 
