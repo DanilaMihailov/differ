@@ -85,27 +85,7 @@ defmodule Differ do
   """
   @spec patch(diffable(), diff()) :: {:ok, diffable()} | {:error, String.t()}
   def patch(obj, diff) do
-    type = get_diff_type(diff)
-
-    case type do
-      :unknown ->
-        {:error, "Unknown diff type"}
-
-      :empty ->
-        {:ok, obj}
-
-      :list when is_list(obj) ->
-        patch(type, obj, diff)
-
-      :string when is_binary(obj) ->
-        patch(type, obj, diff)
-
-      :map when is_map(obj) ->
-        patch(type, obj, diff)
-
-      _ ->
-        {:error, "Diff type and obj type do not match"}
-    end
+    apply_diff(obj, diff, false)
   end
 
   @doc """
@@ -116,16 +96,11 @@ defmodule Differ do
       iex(1)> new_list = ["2", "1", "3"]
       iex(1)> diff = Differ.diff old_list, new_list 
       iex(2)> Differ.revert new_list, diff
-      ["22", "1"]
+      {:ok, ["22", "1"]}
   """
-  @spec revert(diffable(), diff()) :: diffable()
+  @spec revert(diffable(), diff()) :: {:ok, diffable()} | {:error, String.t()}
   def revert(obj, diff) do
-    type = get_diff_type(diff)
-
-    case type do
-      :unknown -> nil
-      _ -> revert(type, obj, diff)
-    end
+    apply_diff(obj, diff, true)
   end
 
   @doc """
@@ -176,9 +151,33 @@ defmodule Differ do
     end)
   end
 
-  defp patch(:string, old_str, diff) do
-    {str, _} =
-      Enum.reduce(diff, {"", 0}, fn {op, val}, {new_str, index} ->
+  defp apply_diff(obj, diff, revert) do
+    type = get_diff_type(diff)
+
+    case type do
+      :unknown ->
+        {:error, "Unknown diff type"}
+
+      :empty ->
+        {:ok, obj}
+
+      :list when is_list(obj) ->
+        patch(type, obj, diff, revert)
+
+      :string when is_binary(obj) ->
+        patch(type, obj, diff, revert)
+
+      :map when is_map(obj) ->
+        patch(type, obj, diff, revert)
+
+      _ ->
+        {:error, "Diff type and obj type do not match"}
+    end
+  end
+
+  defp patch(:string, old_str, diff, revert) do
+    result =
+      Enum.reduce_while(diff, {"", 0}, fn {op, val}, {new_str, index} ->
         new_index =
           if is_binary(val) do
             String.length(val) + index
@@ -186,20 +185,26 @@ defmodule Differ do
             val + index
           end
 
-        case op do
-          :del -> {new_str, new_index}
-          :eq -> {new_str <> val, new_index}
-          :ins -> {new_str <> val, index}
-          :remove -> {new_str, new_index}
-          :skip -> {new_str <> String.slice(old_str, index, val), new_index}
+        case {op, revert} do
+          {:del, false} -> {:cont, {new_str, new_index}}
+          {:del, true} -> {:cont, {new_str <> val, index}}
+          {:eq, _} -> {:cont, {new_str <> val, new_index}}
+          {:ins, false} -> {:cont, {new_str <> val, index}}
+          {:ins, true} -> {:cont, {new_str, new_index}}
+          {:remove, false} -> {:cont, {new_str, new_index}}
+          {:remove, true} -> {:halt, {:error, "This diff is not revertable"}}
+          {:skip, _} -> {:cont, {new_str <> String.slice(old_str, index, val), new_index}}
         end
       end)
 
-    {:ok, str}
+    case result do
+      {:error, _msg} -> result
+      {str, _index} -> {:ok, str}
+    end
   end
 
-  defp patch(:list, old_list, diff) do
-    {list, _index} =
+  defp patch(:list, old_list, diff, revert) do
+    result =
       Enum.reduce_while(diff, {[], 0}, fn {op, val}, {new_list, index} ->
         new_index =
           if is_list(val) do
@@ -208,18 +213,24 @@ defmodule Differ do
             val + index
           end
 
-        case op do
-          :del ->
+        case {op, revert} do
+          {:del, false} ->
             {:cont, {new_list, new_index}}
 
-          :eq ->
-            {:cont, {new_list ++ val, new_index}}
-
-          :ins ->
+          {:del, true} ->
             {:cont, {new_list ++ val, index}}
 
-          :diff ->
-            patched = patch(Enum.at(old_list, index), val)
+          {:eq, _} ->
+            {:cont, {new_list ++ val, new_index}}
+
+          {:ins, false} ->
+            {:cont, {new_list ++ val, index}}
+
+          {:ins, true} ->
+            {:cont, {new_list, new_index}}
+
+          {:diff, _} ->
+            patched = apply_diff(Enum.at(old_list, index), val, revert)
 
             case patched do
               {:ok, new_val} ->
@@ -229,38 +240,47 @@ defmodule Differ do
                 {:halt, patched}
             end
 
-          :remove ->
+          {:remove, false} ->
             {:cont, {new_list, new_index}}
 
-          :skip ->
+          {:remove, true} ->
+            {:halt, {:error, "This diff is not revertable"}}
+
+          {:skip, _} ->
             {:cont, {new_list ++ Enum.slice(old_list, index, val), new_index}}
 
           _ ->
-            {:halt, {:error, "Unknown operation #{op}"}}
+            {:halt, {:error, "Unknown operation #{op} for diff of type #{:list}"}}
         end
       end)
 
-    case list do
-      {:error, _msg} -> list
-      _ -> {:ok, list}
+    case result do
+      {:error, _msg} -> result
+      {list, _index} -> {:ok, list}
     end
   end
 
-  defp patch(:map, old_map, diff) do
+  defp patch(:map, old_map, diff, revert) do
     map =
       Enum.reduce_while(diff, old_map, fn {key, op, val}, new_map ->
-        case op do
-          :del ->
+        case {op, revert} do
+          {:del, false} ->
             {:cont, Map.delete(new_map, key)}
 
-          :eq ->
-            {:cont, new_map}
-
-          :ins ->
+          {:del, true} ->
             {:cont, Map.put(new_map, key, val)}
 
-          :diff ->
-            patched = patch(Map.get(new_map, key), val)
+          {:eq, _} ->
+            {:cont, new_map}
+
+          {:ins, false} ->
+            {:cont, Map.put(new_map, key, val)}
+
+          {:ins, true} ->
+            {:cont, Map.delete(new_map, key)}
+
+          {:diff, _} ->
+            patched = apply_diff(Map.get(new_map, key), val, revert)
 
             case patched do
               {:ok, new_val} ->
@@ -271,7 +291,7 @@ defmodule Differ do
             end
 
           _ ->
-            {:halt, {:error, "Unknown operation #{op}"}}
+            {:halt, {:error, "Unknown operation #{op} for diff of type #{:map}"}}
         end
       end)
 
@@ -279,59 +299,5 @@ defmodule Differ do
       {:error, _msg} -> map
       _ -> {:ok, map}
     end
-  end
-
-  defp revert(:string, old_string, diff) do
-    {str, _} =
-      Enum.reduce(diff, {"", 0}, fn {op, val}, {new_str, index} ->
-        new_index =
-          if is_binary(val) do
-            String.length(val) + index
-          else
-            val + index
-          end
-
-        case op do
-          :ins -> {new_str, new_index}
-          :eq -> {new_str <> val, new_index}
-          :del -> {new_str <> val, index}
-          :skip -> {new_str <> String.slice(old_string, index, val), new_index}
-        end
-      end)
-
-    str
-  end
-
-  defp revert(:list, old_list, diff) do
-    {list, _} =
-      Enum.reduce(diff, {[], 0}, fn {op, val}, {new_list, index} ->
-        new_index =
-          if is_list(val) do
-            Enum.count(val) + index
-          else
-            val + index
-          end
-
-        case op do
-          :ins -> {new_list, new_index}
-          :eq -> {new_list ++ val, new_index}
-          :del -> {new_list ++ val, index}
-          :diff -> {new_list ++ [revert(Enum.at(old_list, index), val)], index}
-          :skip -> {new_list ++ Enum.slice(old_list, index, val), new_index}
-        end
-      end)
-
-    list
-  end
-
-  defp revert(:map, old_map, diff) do
-    Enum.reduce(diff, old_map, fn {key, op, val}, new_map ->
-      case op do
-        :ins -> Map.delete(new_map, key)
-        :eq -> new_map
-        :del -> Map.put(new_map, key, val)
-        :diff -> Map.put(new_map, key, revert(Map.get(new_map, key), val))
-      end
-    end)
   end
 end
