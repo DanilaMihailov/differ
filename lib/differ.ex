@@ -36,9 +36,9 @@ defmodule Differ do
   def diff(old, new) do
     cond do
       old == new -> [eq: new]
-      is_list(new) -> List.myers_difference(old, new, &diff/2)
+      is_list(new) -> Differ.List.diff(old, new, &diff/2)
       is_map(new) -> Differ.Map.diff(old, new, &diff/2)
-      is_bitstring(new) -> String.myers_difference(old, new)
+      is_bitstring(new) -> Differ.String.diff(old, new)
       true -> nil
     end
   end
