@@ -60,9 +60,9 @@ defmodule DifferTest do
     op_diff = Differ.optimize_size(diff)
     non_rev_diff = Differ.optimize_size(diff, false)
 
-    assert new_str == Differ.patch(old_str, diff)
-    assert new_str == Differ.patch(old_str, op_diff)
-    assert new_str == Differ.patch(old_str, non_rev_diff)
+    assert {:ok, new_str} == Differ.patch(old_str, diff)
+    assert {:ok, new_str} == Differ.patch(old_str, op_diff)
+    assert {:ok, new_str} == Differ.patch(old_str, non_rev_diff)
   end
 
   test "string diffs are revertable" do

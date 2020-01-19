@@ -46,17 +46,21 @@ defmodule Differ do
   @doc """
   Detects diff type
 
-  If cannot detect type, or diff is empty returns `:unknown`
+  If cannot detect type returns `:unknown`
+  If diff is empty returns `:empty`
 
   ## Examples
       iex> Differ.get_diff_type [diff: [eq: "2", del: "2"], eq: ["1"], ins: ["3"]]
       :list
       
       iex> Differ.get_diff_type []
+      :empty
+
+      iex> Differ.get_diff_type ["some list", %{}]
       :unknown
 
   """
-  @spec get_diff_type(diff()) :: :list | :map | :string | :unknown
+  @spec get_diff_type(diff()) :: :list | :map | :string | :unknown | :empty
   def get_diff_type(diff) do
     case diff do
       [{:skip, _num} | tail] -> get_diff_type(tail)
@@ -65,6 +69,7 @@ defmodule Differ do
       [{_key, _op, _val} | _] -> :map
       [{_op, val} | _] when is_binary(val) -> :string
       [{_op, val} | _] when is_list(val) -> :list
+      [] -> :empty
       _ -> :unknown
     end
   end
@@ -76,16 +81,30 @@ defmodule Differ do
       iex(1)> old_list = ["22", "1"]
       iex(1)> diff = Differ.diff old_list, ["2", "1", "3"]
       iex(2)> Differ.patch old_list, diff
-      ["2", "1", "3"]
+      {:ok, ["2", "1", "3"]}
   """
-  @spec patch(diffable(), diff()) :: diffable() | nil
+  @spec patch(diffable(), diff()) :: {:ok, diffable()} | {:error, String.t()}
   def patch(obj, diff) do
-    # TODO: compare obj type with diff type
     type = get_diff_type(diff)
 
     case type do
-      :unknown -> nil
-      _ -> patch(type, obj, diff)
+      :unknown ->
+        {:error, "Unknown diff type"}
+
+      :empty ->
+        {:ok, obj}
+
+      :list when is_list(obj) ->
+        patch(type, obj, diff)
+
+      :string when is_binary(obj) ->
+        patch(type, obj, diff)
+
+      :map when is_map(obj) ->
+        patch(type, obj, diff)
+
+      _ ->
+        {:error, "Diff type and obj type do not match"}
     end
   end
 
@@ -176,12 +195,12 @@ defmodule Differ do
         end
       end)
 
-    str
+    {:ok, str}
   end
 
   defp patch(:list, old_list, diff) do
-    {list, _} =
-      Enum.reduce(diff, {[], 0}, fn {op, val}, {new_list, index} ->
+    {list, _index} =
+      Enum.reduce_while(diff, {[], 0}, fn {op, val}, {new_list, index} ->
         new_index =
           if is_list(val) do
             Enum.count(val) + index
@@ -190,27 +209,76 @@ defmodule Differ do
           end
 
         case op do
-          :del -> {new_list, new_index}
-          :eq -> {new_list ++ val, new_index}
-          :ins -> {new_list ++ val, index}
-          :diff -> {new_list ++ [patch(Enum.at(old_list, index), val)], index}
-          :remove -> {new_list, new_index}
-          :skip -> {new_list ++ Enum.slice(old_list, index, val), new_index}
+          :del ->
+            {:cont, {new_list, new_index}}
+
+          :eq ->
+            {:cont, {new_list ++ val, new_index}}
+
+          :ins ->
+            {:cont, {new_list ++ val, index}}
+
+          :diff ->
+            patched = patch(Enum.at(old_list, index), val)
+
+            case patched do
+              {:ok, new_val} ->
+                {:cont, {new_list ++ [new_val], index}}
+
+              _ ->
+                {:halt, patched}
+            end
+
+          :remove ->
+            {:cont, {new_list, new_index}}
+
+          :skip ->
+            {:cont, {new_list ++ Enum.slice(old_list, index, val), new_index}}
+
+          _ ->
+            {:halt, {:error, "Unknown operation #{op}"}}
         end
       end)
 
-    list
+    case list do
+      {:error, _msg} -> list
+      _ -> {:ok, list}
+    end
   end
 
   defp patch(:map, old_map, diff) do
-    Enum.reduce(diff, old_map, fn {key, op, val}, new_map ->
-      case op do
-        :del -> Map.delete(new_map, key)
-        :eq -> new_map
-        :ins -> Map.put(new_map, key, val)
-        :diff -> Map.put(new_map, key, patch(Map.get(new_map, key), val))
-      end
-    end)
+    map =
+      Enum.reduce_while(diff, old_map, fn {key, op, val}, new_map ->
+        case op do
+          :del ->
+            {:cont, Map.delete(new_map, key)}
+
+          :eq ->
+            {:cont, new_map}
+
+          :ins ->
+            {:cont, Map.put(new_map, key, val)}
+
+          :diff ->
+            patched = patch(Map.get(new_map, key), val)
+
+            case patched do
+              {:ok, new_val} ->
+                {:cont, Map.put(new_map, key, new_val)}
+
+              {:error, _msg} ->
+                {:halt, patched}
+            end
+
+          _ ->
+            {:halt, {:error, "Unknown operation #{op}"}}
+        end
+      end)
+
+    case map do
+      {:error, _msg} -> map
+      _ -> {:ok, map}
+    end
   end
 
   defp revert(:string, old_string, diff) do
