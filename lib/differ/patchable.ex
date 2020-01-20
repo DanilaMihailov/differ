@@ -12,6 +12,9 @@ defprotocol Differ.Patchable do
   @spec perform(term, {term, :diff, list(term)}, tuple) :: {:diff, list(term), term, {term, :ins}}
   def perform(old_val, op, new_val)
   def revert_op(val, op)
+
+  # TODO: add catch all function in implementation and return {:error, reason}?
+  # TODO: check revert_op when reverting non-revertable should throw?
 end
 
 defimpl Differ.Patchable, for: Any do
