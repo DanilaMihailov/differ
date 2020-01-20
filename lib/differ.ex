@@ -6,6 +6,13 @@ defmodule Differ do
 
   @doc """
   Returns diff between 2 objects of same type
+
+  ## Examples
+      iex> Differ.diff(%{key: "value"}, %{key: "value"})
+      [eq: %{key: "value"}]
+
+      iex> Differ.diff("Hello!", "Hey!")
+      [eq: "He", del: "llo", ins: "y", eq: "!"]
   """
   @spec diff(Diffable.t(), Diffable.t()) :: Diffable.diff()
   def diff(old, new) do
