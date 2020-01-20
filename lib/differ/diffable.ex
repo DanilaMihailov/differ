@@ -22,6 +22,7 @@ end
 
 defimpl Differ.Diffable, for: Map do
   def diff(map, map), do: [eq: map]
+
   def diff(old_map, new_map) do
     del_keys = Map.keys(old_map) -- Map.keys(new_map)
 

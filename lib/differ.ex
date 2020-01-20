@@ -151,6 +151,70 @@ defmodule Differ do
     end)
   end
 
+  defp match_res(res, old_val, acc, revert) do
+    case res do
+      {:ok, new_acc} ->
+        {:cont, new_acc}
+
+      {:diff, diff, old, op} ->
+        diff_res = patch_new(old, diff)
+
+        case diff_res do
+          {:ok, val} ->
+            new_op = Tuple.append(op, val)
+            new_op = if revert, do: Differ.Patchable.revert_op(old_val, new_op), else: new_op
+            Differ.Patchable.perform(old_val, new_op, acc) |> match_res(old_val, acc, revert)
+
+          _ ->
+            {:halt, res}
+        end
+
+      _ ->
+        {:halt, res}
+    end
+  end
+
+  @doc """
+      iex(1)> Differ.patch_new("qwe", [eq: "qw", del: "e", ins: "sd"])
+      {:ok, "qwsd"}
+
+      iex(1)> Differ.revert_new("qwsd", [eq: "qw", del: "e", ins: "sd"])
+      {:ok, "qwe"}
+
+      iex(1)> Differ.patch_new(%{key1: "val"}, [{:key2, :ins, "222"}, {:key1, :diff, [eq: "va", del: "l", ins: "r"]}])
+      {:ok, %{key1: "var", key2: "222"}}
+
+      iex(1)> Differ.patch_new([1, 3, 4], [eq: [1], ins: [2], eq: [3], del: [4]])
+      {:ok, [1,2,3]}
+
+      iex> Differ.patch_new(["qwer", "ty"], [diff: [eq: "qw", del: "er"], eq: ["ty"]])
+      {:ok, ["qw", "ty"]}
+
+      iex> Differ.revert_new(["qw", "ty"], [diff: [eq: "qw", del: "er"], eq: ["ty"]])
+      {:ok, ["qwer", "ty"]}
+
+  """
+  def patch_new(old_val, diff) do
+    apply_diff_new(old_val, diff, false)
+  end
+
+  def revert_new(old_val, diff) do
+    apply_diff_new(old_val, diff, true)
+  end
+
+  defp apply_diff_new(old_val, diff, revert) do
+    result =
+      Enum.reduce_while(diff, {old_val, 0}, fn op, acc ->
+        op = if revert, do: Differ.Patchable.revert_op(old_val, op), else: op
+        Differ.Patchable.perform(old_val, op, acc) |> match_res(old_val, acc, revert)
+      end)
+
+    case result do
+      {:error, _msg} -> result
+      {str, _other} -> {:ok, str}
+    end
+  end
+
   defp apply_diff(obj, diff, revert) do
     type = get_diff_type(diff)
 
