@@ -36,10 +36,7 @@ defmodule Differ.Map do
   """
   @spec diff(map(), map(), (any(), any() -> Differ.diff() | nil)) :: Differ.diff()
   def diff(old_map, new_map, differ) do
-    old_keys = Map.keys(old_map) |> MapSet.new()
-    new_keys = Map.keys(new_map) |> MapSet.new()
-
-    del_keys = MapSet.difference(old_keys, new_keys)
+    del_keys = Map.keys(old_map) -- Map.keys(new_map)
 
     res =
       Enum.reduce(del_keys, [], fn key, ops ->
