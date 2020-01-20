@@ -38,37 +38,6 @@ defmodule Differ do
   end
 
   @doc """
-  Detects diff type
-
-  If cannot detect type returns `:unknown`
-  If diff is empty returns `:empty`
-
-  ## Examples
-      iex> Differ.get_diff_type [diff: [eq: "2", del: "2"], eq: ["1"], ins: ["3"]]
-      :list
-      
-      iex> Differ.get_diff_type []
-      :empty
-
-      iex> Differ.get_diff_type ["some list", %{}]
-      :unknown
-
-      iex> Differ.get_diff_type [eq: %{test: 1}]
-      :map
-
-  """
-  @spec get_diff_type(diff()) :: :list | :map | :string | :unknown | :empty
-  def get_diff_type(diff) do
-    cond do
-      List.first(diff) == nil -> :empty
-      Differ.List.list_diff?(diff) -> :list
-      Differ.String.string_diff?(diff) -> :string
-      Differ.Map.map_diff?(diff) -> :map
-      true -> :unknown
-    end
-  end
-
-  @doc """
   Applies diff and returns patched value
 
   ## Examples
