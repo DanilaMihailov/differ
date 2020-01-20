@@ -28,17 +28,34 @@ defimpl Differ.Patchable, for: BitString do
     {new_op, val}
   end
 
-  # FIXME: will produce wrong results for string with duplicates
-  def perform(_old_str, {:del, val}, {new_str, _index}) do
-    {:ok, {String.replace(new_str, val, ""), String.length(val)}}
+  def perform(_old_str, {:del, val}, {new_str, index}) do
+    len = String.length(val)
+    part = String.slice(new_str, index, len)
+    case part do
+      ^val -> 
+        {before, next} = String.split_at(new_str, index)
+        {_, add} = String.split_at(next, len)
+        {:ok, {before <> add, index}}
+      _ -> 
+        {:error, "Conflict #{val} != #{part}"}
+    end
   end
 
-  def perform(_old_str, {:eq, val}, {new_str, _index}) do
-    {:ok, {new_str, String.length(val)}}
+  def perform(_old_str, {:eq, val}, {new_str, index}) do
+    {:ok, {new_str, index + String.length(val)}}
   end
 
   def perform(_old_str, {:ins, val}, {new_str, index}) do
-    {:ok, {new_str <> val, index}}
+    new_str = 
+      cond do
+        index == 0 -> val <> new_str 
+        index == String.length(new_str) -> new_str <> val
+        true ->
+          {before, next} = String.split_at(new_str, index)
+          before <> val <> next
+
+      end
+    {:ok, {new_str, index + String.length(val)}}
   end
 end
 
