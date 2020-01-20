@@ -1,6 +1,6 @@
 defmodule Differ.StringTest do
   use ExUnit.Case
-  doctest Differ.String
+  # doctest Differ.String
 
   test "string diffs are patchable" do
     old_str = "My name is Dan"

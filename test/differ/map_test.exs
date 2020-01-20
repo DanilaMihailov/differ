@@ -1,6 +1,6 @@
 defmodule Differ.MapTest do
   use ExUnit.Case
-  doctest Differ.Map
+  # doctest Differ.Map
 
   test "simple" do
     old_map = %{
