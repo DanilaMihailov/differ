@@ -1,25 +1,3 @@
-defprotocol Differ.Diffable do
-  @fallback_to_any true
-  def diff(term1, term2)
-end
-
-defimpl Differ.Diffable, for: Any do
-  def diff(term, term), do: [eq: term]
-  def diff(_term1, _term2), do: nil
-end
-
-defimpl Differ.Diffable, for: List do
-  def diff(list1, list2) do
-    List.myers_difference(list1, list2, &Differ.Diffable.diff/2)
-  end
-end
-
-defimpl Differ.Diffable, for: BitString do
-  def diff(string1, string2) do
-    String.myers_difference(string1, string2)
-  end
-end
-
 defimpl Differ.Diffable, for: Map do
   def diff(map, map), do: [eq: map]
 
