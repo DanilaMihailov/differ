@@ -2,10 +2,10 @@ defmodule Differ do
   alias Differ.Diffable
   alias Differ.Patchable
 
-  @moduledoc "Module that computes diff for objects"
+  @moduledoc "Module that computes `diff` for terms"
 
   @doc """
-  Returns diff between 2 objects of same type
+  Returns diff between 2 terms of same type
 
   ## Examples
       iex> Differ.diff(%{key: "value"}, %{key: "value"})

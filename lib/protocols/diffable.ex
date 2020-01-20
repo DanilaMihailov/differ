@@ -1,7 +1,7 @@
 defprotocol Differ.Diffable do
   @fallback_to_any true
   @moduledoc """
-  Allows to compute difference between objects
+  Allows to compute `diff` between terms
   """
 
   @typedoc """

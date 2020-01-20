@@ -3,7 +3,7 @@ defprotocol Differ.Patchable do
   @fallback_to_any true
 
   @moduledoc """
-  Applies `diff` to a term
+  Allows to apply `diff` to a term
   """
 
   @doc """
