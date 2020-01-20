@@ -34,13 +34,7 @@ defmodule Differ do
   """
   @spec diff(diffable(), diffable()) :: diff()
   def diff(old, new) do
-    cond do
-      old == new -> [eq: new]
-      is_list(new) -> Differ.List.diff(old, new, &diff/2)
-      is_map(new) -> Differ.Map.diff(old, new, &diff/2)
-      is_bitstring(new) -> Differ.String.diff(old, new)
-      true -> nil
-    end
+    Differ.Diffable.diff(old, new)
   end
 
   @doc """
@@ -107,15 +101,15 @@ defmodule Differ do
   Removes equal data from diffs
 
   ## Examples
-      iex> regular_diff = Differ.diff(%{"same" => "same"}, %{"same" => "same", "new" => "val"})
-      [{"same", :eq, "same"}, {"new", :ins, "val"}]
-      iex> Differ.optimize(regular_diff)
-      [{"new", :ins, "val"}]
-
-      iex> diff = Differ.diff("Somewhat long string with a litle change there", "Somewhat long string with a litle change here")
-      [eq: "Somewhat long string with a litle change ", del: "t", eq: "here"]
-      iex> Differ.optimize(diff)
-      [skip: 41, del: "t", skip: 4]
+      # iex> regular_diff = Differ.diff(%{"same" => "same"}, %{"same" => "same", "new" => "val"})
+      # [{"same", :eq, "same"}, {"new", :ins, "val"}]
+      # iex> Differ.optimize(regular_diff)
+      # [{"new", :ins, "val"}]
+      #
+      # iex> diff = Differ.diff("Somewhat long string with a litle change there", "Somewhat long string with a litle change here")
+      # [eq: "Somewhat long string with a litle change ", del: "t", eq: "here"]
+      # iex> Differ.optimize(diff)
+      # [skip: 41, del: "t", skip: 4]
   """
   @spec optimize(diff(), boolean()) :: diff()
   def optimize(diff, revertable \\ true) do
@@ -157,7 +151,7 @@ defmodule Differ do
         {:cont, new_acc}
 
       {:diff, diff, old, op} ->
-        diff_res = apply_diff_new(old, diff, revert)
+        diff_res = apply_diff(old, diff, revert)
 
         case diff_res do
           {:ok, val} ->
@@ -173,35 +167,7 @@ defmodule Differ do
     end
   end
 
-  @doc """
-      iex(1)> Differ.patch_new("qwe", [eq: "qw", del: "e", ins: "sd"])
-      {:ok, "qwsd"}
-
-      iex(1)> Differ.revert_new("qwsd", [eq: "qw", del: "e", ins: "sd"])
-      {:ok, "qwe"}
-
-      iex(1)> Differ.patch_new(%{key1: "val"}, [{:key2, :ins, "222"}, {:key1, :diff, [eq: "va", del: "l", ins: "r"]}])
-      {:ok, %{key1: "var", key2: "222"}}
-
-      iex(1)> Differ.patch_new([1, 3, 4], [eq: [1], ins: [2], eq: [3], del: [4]])
-      {:ok, [1,2,3]}
-
-      iex> Differ.patch_new(["qwer", "ty"], [diff: [eq: "qw", del: "er"], eq: ["ty"]])
-      {:ok, ["qw", "ty"]}
-
-      iex> Differ.revert_new(["qw", "ty"], [diff: [eq: "qw", del: "er"], eq: ["ty"]])
-      {:ok, ["qwer", "ty"]}
-
-  """
-  def patch_new(old_val, diff) do
-    apply_diff_new(old_val, diff, false)
-  end
-
-  def revert_new(old_val, diff) do
-    apply_diff_new(old_val, diff, true)
-  end
-
-  defp apply_diff_new(old_val, diff, revert) do
+  defp apply_diff(old_val, diff, revert) do
     result =
       Enum.reduce_while(diff, {old_val, 0}, fn op, acc ->
         op = if revert, do: Differ.Patchable.revert_op(old_val, op), else: op
@@ -211,42 +177,6 @@ defmodule Differ do
     case result do
       {:error, _msg} -> result
       {str, _other} -> {:ok, str}
-    end
-  end
-
-  defp apply_diff(obj, diff, revert) do
-    type = get_diff_type(diff)
-
-    case type do
-      :unknown ->
-        {:error, "Unknown diff type"}
-
-      :empty ->
-        {:ok, obj}
-
-      :list when is_list(obj) ->
-        if revert do
-          Differ.List.revert(obj, diff, &apply_diff/3)
-        else
-          Differ.List.patch(obj, diff, &apply_diff/3)
-        end
-
-      :string when is_bitstring(obj) ->
-        if revert do
-          Differ.String.revert(obj, diff)
-        else
-          Differ.String.patch(obj, diff)
-        end
-
-      :map when is_map(obj) ->
-        if revert do
-          Differ.Map.revert(obj, diff, &apply_diff/3)
-        else
-          Differ.Map.patch(obj, diff, &apply_diff/3)
-        end
-
-      _ ->
-        {:error, "Diff type and obj type do not match"}
     end
   end
 end
