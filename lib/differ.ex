@@ -76,7 +76,13 @@ defmodule Differ do
   end
 
   @doc """
-  Removes equal data from diffs
+  Optimizes diff size
+
+  Optimizes size by removing data that is not relevant for change.
+  There is 3 levels of optimization:
+    1. Safe - can have conflicts, can be reverted
+    2. Safe-ish - you lose ability to get conflicts, but still can be reverted
+    3. Un-safe - no conflicts and no reverting
 
   ## Examples
       iex> regular_diff = Differ.diff(%{"same" => "same"}, %{"same" => "same", "new" => "val"})
