@@ -3,7 +3,8 @@ defprotocol Differ.Patchable do
   @doc """
   Performs operation `op` on `term`
 
-  First argument is original term. Second is operation, that get matched against functions in implementations. Third is a tuple, where first item should be result of the operation, and second is anything else.
+  First argument is original term. Second is operation, that get matched against functions in implementations.
+  Third is a tuple, where first item should be result of the operation, and second is anything else.
 
   Function should return tuple with `:ok` atom and tuple {result, anything}
   """
@@ -20,23 +21,27 @@ end
 
 defimpl Differ.Patchable, for: BitString do
   def revert_op(_val, {op, val}) do
-    new_op = case op do
-      :del -> :ins
-      :ins -> :del
-      _ -> op
-    end
+    new_op =
+      case op do
+        :del -> :ins
+        :ins -> :del
+        _ -> op
+      end
+
     {new_op, val}
   end
 
   def perform(_old_str, {:del, val}, {new_str, index}) do
     len = String.length(val)
     part = String.slice(new_str, index, len)
+
     case part do
-      ^val -> 
+      ^val ->
         {before, next} = String.split_at(new_str, index)
         {_, add} = String.split_at(next, len)
         {:ok, {before <> add, index}}
-      _ -> 
+
+      _ ->
         {:error, "Conflict #{val} != #{part}"}
     end
   end
@@ -50,26 +55,32 @@ defimpl Differ.Patchable, for: BitString do
   end
 
   def perform(_old_str, {:ins, val}, {new_str, index}) do
-    new_str = 
+    new_str =
       cond do
-        index == 0 -> val <> new_str 
-        index == String.length(new_str) -> new_str <> val
+        index == 0 ->
+          val <> new_str
+
+        index == String.length(new_str) ->
+          new_str <> val
+
         true ->
           {before, next} = String.split_at(new_str, index)
           before <> val <> next
-
       end
+
     {:ok, {new_str, index + String.length(val)}}
   end
 end
 
 defimpl Differ.Patchable, for: Map do
   def revert_op(_val, {key, op, val}) do
-    new_op = case op do
-      :del -> :ins
-      :ins -> :del
-      _ -> op
-    end
+    new_op =
+      case op do
+        :del -> :ins
+        :ins -> :del
+        _ -> op
+      end
+
     {key, new_op, val}
   end
 
@@ -94,11 +105,13 @@ end
 
 defimpl Differ.Patchable, for: List do
   def revert_op(_val, {op, val}) do
-    new_op = case op do
-      :del -> :ins
-      :ins -> :del
-      _ -> op
-    end
+    new_op =
+      case op do
+        :del -> :ins
+        :ins -> :del
+        _ -> op
+      end
+
     {new_op, val}
   end
 
@@ -116,9 +129,11 @@ defimpl Differ.Patchable, for: List do
   end
 
   def perform(_old_list, {:ins, val}, {new_list, index}) do
-    {new_list, _} = Enum.reduce(List.wrap(val), {new_list, index}, fn v, {l, i} ->
-      {List.insert_at(l, i, v), i + 1}
-    end)
+    {new_list, _} =
+      Enum.reduce(List.wrap(val), {new_list, index}, fn v, {l, i} ->
+        {List.insert_at(l, i, v), i + 1}
+      end)
+
     {:ok, {new_list, index + Enum.count(val)}}
   end
 
@@ -129,5 +144,4 @@ defimpl Differ.Patchable, for: List do
   def perform(old_list, {:diff, diff}, {_, index}) do
     {:diff, diff, Enum.at(old_list, index), {:replace}}
   end
-
 end
