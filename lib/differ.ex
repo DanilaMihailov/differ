@@ -157,12 +157,11 @@ defmodule Differ do
         {:cont, new_acc}
 
       {:diff, diff, old, op} ->
-        diff_res = patch_new(old, diff)
+        diff_res = apply_diff_new(old, diff, revert)
 
         case diff_res do
           {:ok, val} ->
             new_op = Tuple.append(op, val)
-            new_op = if revert, do: Differ.Patchable.revert_op(old_val, new_op), else: new_op
             Differ.Patchable.perform(old_val, new_op, acc) |> match_res(old_val, acc, revert)
 
           _ ->
