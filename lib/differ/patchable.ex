@@ -46,6 +46,14 @@ defimpl Differ.Patchable, for: BitString do
     end
   end
 
+  def perform(_old_str, {:remove, val}, {new_str, index}) do
+    len = val
+
+    {before, next} = String.split_at(new_str, index)
+    {_, add} = String.split_at(next, len)
+    {:ok, {before <> add, index}}
+  end
+
   def perform(_old_str, {:eq, val}, {new_str, index}) do
     {:ok, {new_str, index + String.length(val)}}
   end
