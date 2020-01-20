@@ -1,6 +1,5 @@
 defmodule Differ do
   @moduledoc "Module that computes diff for objects"
-  @moduledoc since: "0.1.0"
 
   @typedoc """
   Operators that define how to change data
