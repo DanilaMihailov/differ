@@ -15,24 +15,10 @@ defmodule Differ.MapTest do
       "other" => 1
     }
 
-    output = Differ.Map.diff(old_map, new_map)
+    output = Differ.diff(old_map, new_map)
 
-    expected_output = [
-      {"other", :eq, 1},
-      {"changed", :ins, "xval"},
-      {"added", :ins, "new"},
-      {"removed", :del, "sf"}
-    ]
-
+    expected_output = [{"other", :eq, 1}, {"changed", :diff, [del: "s", ins: "x", eq: "val"]}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
     assert expected_output == output
-  end
-
-  defp differ(old, new) do
-    cond do
-      is_map(new) -> Differ.Map.diff(old, new, &differ/2)
-      is_binary(new) -> String.myers_difference(old, new)
-      true -> [eq: new]
-    end
   end
 
   test "nested maps" do
@@ -58,7 +44,7 @@ defmodule Differ.MapTest do
       }
     }
 
-    output = Differ.Map.diff(old_map, new_map, &differ/2)
+    output = Differ.diff(old_map, new_map)
 
     expected_output = [
       {"other", :eq, 1},
