@@ -41,7 +41,7 @@ defmodule Differ.MixProject do
     [
       main: "readme",
       groups_for_modules: [
-        "Protocols": ~r/able/
+        Protocols: ~r/able/
       ],
       extras: [
         "README.md"

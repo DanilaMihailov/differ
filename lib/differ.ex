@@ -48,6 +48,33 @@ defmodule Differ do
     apply_diff(obj, diff, true)
   end
 
+  defp optimize_op(op, level) do
+    case op do
+      {:remove, _val} ->
+        op
+
+      {:skip, _val} ->
+        op
+
+      {:diff, diff} ->
+        new_op = optimize(diff, level)
+        {:diff, new_op}
+
+      {key, :diff, diff} ->
+        new_op = optimize(diff, level)
+        {key, :diff, new_op}
+
+      {_key, :remove, _val} ->
+        op
+
+      {_key, a, _val} when is_atom(a) ->
+        Diffable.optimize_op(%{}, op, level)
+
+      {key, val} when is_atom(key) ->
+        Diffable.optimize_op(val, op, level)
+    end
+  end
+
   @doc """
   Removes equal data from diffs
 
@@ -59,39 +86,17 @@ defmodule Differ do
 
       iex> diff = Differ.diff("Somewhat long string with a litle change there", "Somewhat long string with a litle change here")
       [eq: "Somewhat long string with a litle change ", del: "t", eq: "here"]
-      iex> Differ.optimize(diff)
+      iex> Differ.optimize(diff, 2)
       [skip: 41, del: "t", skip: 4]
+      iex> Differ.optimize(diff, 3)
+      [skip: 41, remove: 1, skip: 4]
   """
-  @spec optimize(Diffable.diff(), boolean()) :: Diffable.diff()
-  def optimize(diff, revertable \\ true) do
-    Enum.reduce(diff, [], fn change, acc ->
-      case change do
-        {:diff, ndiff} ->
-          acc ++ [{:diff, optimize(ndiff, revertable)}]
-
-        {key, :diff, ndiff} ->
-          acc ++ [{key, :diff, optimize(ndiff, revertable)}]
-
-        {:eq, val} when is_list(val) ->
-          acc ++ [{:skip, Enum.count(val)}]
-
-        {:del, val} when is_list(val) and not revertable ->
-          acc ++ [{:remove, Enum.count(val)}]
-
-        {:eq, val} when is_bitstring(val) ->
-          acc ++ [{:skip, String.length(val)}]
-
-        {:del, val} when is_bitstring(val) and not revertable ->
-          acc ++ [{:remove, String.length(val)}]
-
-        {_key, :eq, _val} ->
-          acc
-
-        {key, :del, _val} when not revertable ->
-          acc ++ [remove: key]
-
-        _ ->
-          acc ++ [change]
+  @spec optimize(Diffable.diff(), Diffable.level()) :: Diffable.diff()
+  def optimize(diff, level \\ 1) do
+    Enum.reduce(diff, [], fn operation, new_diff ->
+      case optimize_op(operation, level) do
+        nil -> new_diff
+        opt -> new_diff ++ [opt]
       end
     end)
   end

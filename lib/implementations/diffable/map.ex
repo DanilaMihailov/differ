@@ -1,4 +1,8 @@
 defimpl Differ.Diffable, for: Map do
+  def optimize_op(_val, {_key, :eq, _}, _), do: nil
+
+  def optimize_op(_val, op, _level), do: op
+
   def diff(map, map), do: [eq: map]
 
   def diff(old_map, new_map) do
@@ -29,4 +33,6 @@ defimpl Differ.Diffable, for: Map do
       end
     end)
   end
+
+  def optimize_op(_, operation), do: operation
 end

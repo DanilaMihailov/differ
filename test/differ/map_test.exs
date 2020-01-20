@@ -17,7 +17,13 @@ defmodule Differ.MapTest do
 
     output = Differ.diff(old_map, new_map)
 
-    expected_output = [{"other", :eq, 1}, {"changed", :diff, [del: "s", ins: "x", eq: "val"]}, {"added", :ins, "new"}, {"removed", :del, "sf"}]
+    expected_output = [
+      {"other", :eq, 1},
+      {"changed", :diff, [del: "s", ins: "x", eq: "val"]},
+      {"added", :ins, "new"},
+      {"removed", :del, "sf"}
+    ]
+
     assert expected_output == output
   end
 

@@ -14,8 +14,9 @@ defprotocol Differ.Patchable do
 
   Function should return tuple with `:ok` atom and tuple {result, anything}
   """
-  @spec perform(t(), Diffable.operation, tuple) :: {:ok, {term, any}}
-  @spec perform(t(), {term, :diff, Diffable.diff()}, tuple) :: {:diff, Diffable.diff(), term, {term, :ins}}
+  @spec perform(t(), Diffable.operation(), tuple) :: {:ok, {term, any}}
+  @spec perform(t(), {term, :diff, Diffable.diff()}, tuple) ::
+          {:diff, Diffable.diff(), term, {term, :ins}}
   def perform(old_val, op, new_val)
   def revert_op(val, op)
 

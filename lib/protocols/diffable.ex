@@ -1,5 +1,4 @@
 defprotocol Differ.Diffable do
-  alias Differ.Diffable
   @fallback_to_any true
   @moduledoc """
   Allows to compute difference between objects
@@ -34,6 +33,22 @@ defprotocol Differ.Diffable do
   @typedoc "List of operations need to be applied"
   @type diff() :: list(operation())
 
-  @spec diff(Diffable.t(), Diffable.t()) :: diff
+  @typedoc """
+  Level of optimization
+  """
+  @type level :: 1 | 2 | 3
+
+  @doc """
+  Returns a list of tuples that represents an edit script
+  """
+  @spec diff(t(), t()) :: diff
   def diff(term1, term2)
+
+  @doc """
+  Optimizes diff operation, to reduce its size
+
+  If it returns nil, then operation can be excluded from diff
+  """
+  @spec optimize_op(t, operation, level) :: operation | nil
+  def optimize_op(t, operation, level)
 end
