@@ -45,6 +45,10 @@ defimpl Differ.Patchable, for: BitString do
     {:ok, {new_str, index + String.length(val)}}
   end
 
+  def perform(_old_str, {:skip, val}, {new_str, index}) do
+    {:ok, {new_str, index + val}}
+  end
+
   def perform(_old_str, {:ins, val}, {new_str, index}) do
     new_str = 
       cond do
@@ -99,23 +103,27 @@ defimpl Differ.Patchable, for: List do
   end
 
   # FIXME: duplicates value not working right
-  def perform(_old_list, {:del, val}, {new_list, _index}) do
-    {:ok, {new_list -- val, Enum.count(val)}}
+  def perform(_old_list, {:del, val}, {new_list, index}) do
+    {:ok, {new_list -- val, index}}
   end
 
-  def perform(_old_list, {:eq, val}, {new_list, _index}) do
-    {:ok, {new_list, Enum.count(val)}}
+  def perform(_old_list, {:eq, val}, {new_list, index}) do
+    {:ok, {new_list, Enum.count(val) + index}}
+  end
+
+  def perform(_old_list, {:skip, val}, {new_list, index}) do
+    {:ok, {new_list, index + val}}
   end
 
   def perform(_old_list, {:ins, val}, {new_list, index}) do
     {new_list, _} = Enum.reduce(List.wrap(val), {new_list, index}, fn v, {l, i} ->
       {List.insert_at(l, i, v), i + 1}
     end)
-    {:ok, {new_list, index}}
+    {:ok, {new_list, index + Enum.count(val)}}
   end
 
   def perform(_old_list, {:replace, val}, {new_list, index}) do
-    {:ok, {List.replace_at(new_list, index, val), index}}
+    {:ok, {List.replace_at(new_list, index, val), index + 1}}
   end
 
   def perform(old_list, {:diff, diff}, {_, index}) do
