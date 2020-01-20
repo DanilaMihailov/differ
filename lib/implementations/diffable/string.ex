@@ -12,5 +12,4 @@ defimpl Differ.Diffable, for: BitString do
   end
 
   def optimize_op(_val, op, _level), do: op
-
 end

@@ -58,4 +58,3 @@ defimpl Differ.Patchable, for: BitString do
     {:ok, {new_str, index + String.length(val)}}
   end
 end
-
