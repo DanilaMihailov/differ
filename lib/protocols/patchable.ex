@@ -1,5 +1,11 @@
 defprotocol Differ.Patchable do
+  alias Differ.Diffable
   @fallback_to_any true
+
+  @moduledoc """
+  Applies `diff` to a term
+  """
+
   @doc """
   Performs operation `op` on `term`
 
@@ -8,8 +14,8 @@ defprotocol Differ.Patchable do
 
   Function should return tuple with `:ok` atom and tuple {result, anything}
   """
-  @spec perform(term, tuple, tuple) :: {:ok, {term, any}}
-  @spec perform(term, {term, :diff, list(term)}, tuple) :: {:diff, list(term), term, {term, :ins}}
+  @spec perform(t(), Diffable.operation, tuple) :: {:ok, {term, any}}
+  @spec perform(t(), {term, :diff, Diffable.diff()}, tuple) :: {:diff, Diffable.diff(), term, {term, :ins}}
   def perform(old_val, op, new_val)
   def revert_op(val, op)
 
