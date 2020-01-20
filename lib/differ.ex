@@ -70,15 +70,15 @@ defmodule Differ do
   Removes equal data from diffs
 
   ## Examples
-      # iex> regular_diff = Differ.diff(%{"same" => "same"}, %{"same" => "same", "new" => "val"})
-      # [{"same", :eq, "same"}, {"new", :ins, "val"}]
-      # iex> Differ.optimize(regular_diff)
-      # [{"new", :ins, "val"}]
-      #
-      # iex> diff = Differ.diff("Somewhat long string with a litle change there", "Somewhat long string with a litle change here")
-      # [eq: "Somewhat long string with a litle change ", del: "t", eq: "here"]
-      # iex> Differ.optimize(diff)
-      # [skip: 41, del: "t", skip: 4]
+      iex> regular_diff = Differ.diff(%{"same" => "same"}, %{"same" => "same", "new" => "val"})
+      [{"same", :eq, "same"}, {"new", :ins, "val"}]
+      iex> Differ.optimize(regular_diff)
+      [{"new", :ins, "val"}]
+
+      iex> diff = Differ.diff("Somewhat long string with a litle change there", "Somewhat long string with a litle change here")
+      [eq: "Somewhat long string with a litle change ", del: "t", eq: "here"]
+      iex> Differ.optimize(diff)
+      [skip: 41, del: "t", skip: 4]
   """
   @spec optimize(diff(), boolean()) :: diff()
   def optimize(diff, revertable \\ true) do
