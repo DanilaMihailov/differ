@@ -6,6 +6,11 @@ defprotocol Differ.Diffable do
   """
 
   @typedoc """
+  Diffable term
+  """
+  @type t() :: term()
+
+  @typedoc """
   Operators that define how to change data
 
   * `:del` - delete

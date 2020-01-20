@@ -7,7 +7,7 @@ defmodule Differ do
   @doc """
   Returns diff between 2 objects of same type
   """
-  @spec diff(Diffable.t(), Diffable.t()) :: Diffable.Diffable.diff()
+  @spec diff(Diffable.t(), Diffable.t()) :: Diffable.diff()
   def diff(old, new) do
     Diffable.diff(old, new)
   end
