@@ -26,6 +26,7 @@ defmodule DifferTest do
     assert diff_op == [{:name, :diff, [eq: "John", ins: " Smith"]}]
     assert Differ.patch(user, diff) == {:ok, user_changed}
     assert Differ.revert(user_changed, diff) == {:ok, user}
+    assert Differ.diff(%User{}, %User{}) == [eq: %User{}]
   end
 
   test "complex diff" do

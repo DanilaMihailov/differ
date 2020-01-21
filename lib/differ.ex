@@ -8,6 +8,8 @@ defmodule Differ do
       defimpl Diffable do
         def optimize_op(val, op, level), do: Diffable.Map.optimize_op(val, op, level)
 
+        def diff(s, s), do: [eq: s]
+
         def diff(old, new) do
           Differ.diff(Map.from_struct(old), Map.from_struct(new))
         end
