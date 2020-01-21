@@ -24,15 +24,17 @@ defimpl Differ.Diffable, for: Map do
           [{key, :eq, val} | ops]
 
         {:ok, old} ->
-          diff = Differ.Diffable.diff(old, val)
-
-          case diff do
-            nil -> [{key, :ins, val} | ops]
-            _ -> [{key, :diff, diff} | ops]
-          end
+          [nested_diff(key, old, val) | ops]
       end
     end)
   end
 
-  def optimize_op(_, operation), do: operation
+  defp nested_diff(key, old, new) do
+    diff = Differ.Diffable.diff(old, new)
+
+    case diff do
+      nil -> {key, :ins, new}
+      _ -> {key, :diff, diff}
+    end
+  end
 end
