@@ -16,10 +16,9 @@ defprotocol Differ.Patchable do
   Third is a tuple, where first item should be result of the operation, 
   and second is anything else.
 
-  Function should return tuple with `:ok` atom and tuple {result, anything}
+  Function should return tuple with `:ok` atom and tuple `{result, anything}`
   """
   # TODO: conflict on patch?
-  # TODO: error on unknown operation
   @spec perform(t(), Diffable.operation(), tuple) ::
           {:ok, {term, any}} | {:error, reason()} | {:conflict, any}
   @spec perform(t(), {term, :diff, Diffable.diff()}, tuple) ::
@@ -29,7 +28,7 @@ defprotocol Differ.Patchable do
   @doc """
   Returns the opposite of operation
 
-  If operation is not revertable, should return {:error, reason}
+  If operation is not revertable, should return `{:error, reason}`
 
   ## Examples
 
