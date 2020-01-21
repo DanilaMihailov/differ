@@ -30,6 +30,11 @@ defimpl Differ.Patchable, for: List do
     {:ok, {new_list, index + Enum.count(val)}}
   end
 
+  def perform(_, {:remove, len}, {nlist, index}) do
+    slice = Enum.slice(nlist, index, len)
+    {:ok, {nlist -- slice, index}}
+  end
+
   def perform(_old_list, {:replace, val}, {new_list, index}) do
     {:ok, {List.replace_at(new_list, index, val), index + 1}}
   end
