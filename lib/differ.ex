@@ -179,6 +179,9 @@ defmodule Differ do
     end
   end
 
+  defp apply_diff(nil, _, _), do: {:ok, nil}
+  defp apply_diff(v, nil, _), do: {:ok, v}
+
   defp apply_diff(old_val, diff, revert) do
     result =
       Enum.reduce_while(diff, {old_val, 0}, fn op, acc ->
