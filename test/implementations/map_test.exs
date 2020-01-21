@@ -14,6 +14,7 @@ defmodule Differ.MapTest do
       akey: %{
         bkey: %{
           ckey: %{
+            yep: 2,
             dkey: %{
               ekey: [1, 2, 3]
             }
@@ -34,6 +35,7 @@ defmodule Differ.MapTest do
       akey: %{
         bkey: %{
           ckey: %{
+            yep: 1,
             dkey: %{
               ekey: [1]
             }
