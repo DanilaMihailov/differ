@@ -1,7 +1,6 @@
 defmodule DifferTest do
   use ExUnit.Case
 
-
   # used in doc tests
   defmodule UserA do
     defstruct name: "John", age: 21
@@ -13,16 +12,15 @@ defmodule DifferTest do
     defstruct name: "John", age: 21
   end
 
-  #should be below structs definition
+  # should be below structs definition
   doctest Differ
 
   test "diff structs" do
     user = %User{name: "John", age: 21}
     user_changed = %User{name: "John Smith", age: 21}
 
-    diff = Differ.diff(user, user_changed) 
+    diff = Differ.diff(user, user_changed)
 
-    
     assert diff == [{:name, :diff, [eq: "John", ins: " Smith"]}, {:age, :eq, 21}]
     assert Differ.patch(user, diff) == {:ok, user_changed}
   end
