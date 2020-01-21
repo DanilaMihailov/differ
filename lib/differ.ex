@@ -182,8 +182,12 @@ defmodule Differ do
   defp apply_diff(old_val, diff, revert) do
     result =
       Enum.reduce_while(diff, {old_val, 0}, fn op, acc ->
-        op = if revert, do: Patchable.revert_op(old_val, op), else: op
-        Patchable.perform(old_val, op, acc) |> match_res(old_val, acc, revert)
+        op = if revert, do: Patchable.revert_op(old_val, op), else: {:ok, op}
+        case op do
+          {:ok, op} ->
+            Patchable.perform(old_val, op, acc) |> match_res(old_val, acc, revert)
+          _ -> {:halt, op}
+        end
       end)
 
     case result do

@@ -1,13 +1,11 @@
 defimpl Differ.Patchable, for: BitString do
   def revert_op(_val, {op, val}) do
-    new_op =
-      case op do
-        :del -> :ins
-        :ins -> :del
-        _ -> op
-      end
-
-    {new_op, val}
+    case op do
+      :remove -> {:error, "Operation :remove is not revertable"}
+      :del -> {:ok, {:ins, val}}
+      :ins -> {:ok, {:del, val}}
+      _ -> {:ok, {op, val}}
+    end
   end
 
   def perform(_old_str, {:del, val}, {new_str, index}) do
@@ -57,4 +55,6 @@ defimpl Differ.Patchable, for: BitString do
 
     {:ok, {new_str, index + String.length(val)}}
   end
+
+  def perform(_, _, _), do: {:error, "Unknown operation"}
 end
