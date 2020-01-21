@@ -1,6 +1,24 @@
 defmodule Differ.MapTest do
   use ExUnit.Case
-  # doctest Differ.Map
+
+  test "empty maps" do
+    diff = Differ.diff(%{}, %{})
+
+    assert diff == []
+    assert {:ok, %{}} == Differ.patch(%{}, diff)
+    assert {:ok, %{}} == Differ.revert(%{}, diff)
+  end
+
+  test "equal maps" do
+    old_str = %{key: "val"}
+    new_str = %{key: "val"}
+
+    diff = Differ.diff(old_str, new_str)
+
+    assert diff == [eq: %{key: "val"}]
+    assert {:ok, new_str} == Differ.patch(old_str, diff)
+    assert {:ok, old_str} == Differ.revert(old_str, diff)
+  end
 
   test "simple" do
     old_map = %{

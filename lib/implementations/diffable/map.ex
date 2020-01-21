@@ -3,6 +3,8 @@ defimpl Differ.Diffable, for: Map do
 
   def optimize_op(_val, op, _level), do: op
 
+  def diff(map, map) when map_size(map) == 0, do: []
+
   def diff(map, map), do: [eq: map]
 
   def diff(old_map, new_map) do

@@ -8,6 +8,8 @@ defimpl Differ.Patchable, for: Map do
     end
   end
 
+  def revert_op(_, op), do: {:ok, op}
+
   def perform(_old_map, {:eq, _val}, {new_map, _}), do: {:ok, {new_map, nil}}
 
   def perform(_old_map, {key, :del, _val}, {new_map, _}) do
