@@ -38,7 +38,9 @@ defmodule Differ.MixProject do
       # documentation check (mix inch)
       {:inch_ex, github: "rrrene/inch_ex", only: [:dev, :test]},
       # static analysis (mix dialyzer)
-      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev], runtime: false},
+      # benchmarks (mix run benchmarks/script_name.exs)
+      {:benchee, "~> 1.0", only: :dev}
     ]
   end
 
