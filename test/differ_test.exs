@@ -20,9 +20,12 @@ defmodule DifferTest do
     user_changed = %User{name: "John Smith", age: 21}
 
     diff = Differ.diff(user, user_changed)
+    diff_op = Differ.optimize(diff)
 
     assert diff == [{:name, :diff, [eq: "John", ins: " Smith"]}, {:age, :eq, 21}]
+    assert diff_op == [{:name, :diff, [eq: "John", ins: " Smith"]}]
     assert Differ.patch(user, diff) == {:ok, user_changed}
+    assert Differ.revert(user_changed, diff) == {:ok, user}
   end
 
   test "complex diff" do
