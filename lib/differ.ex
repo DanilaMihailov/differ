@@ -50,6 +50,8 @@ defmodule Differ do
       iex> Differ.diff(%User{name: "John"}, %User{name: "John Smith"})
       [{:name, :diff, [eq: "John", ins: " Smith"]}, {:age, :eq, 21}]
 
+  Under the hood `Differ` adds implementation for `Differ.Diffable` and `Differ.Patchable`
+  to a given struct
   """
 
   @doc """
