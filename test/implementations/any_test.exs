@@ -23,4 +23,9 @@ defmodule Differ.AnyTest do
     assert {:ok, new_num} == Differ.patch(old_num, diff)
     assert {:ok, old_num} == Differ.revert(old_num, diff)
   end
+
+  test "internal" do
+    assert Differ.Patchable.Any.revert_op(1, {:del, 2}) == {:ok, {:del, 2}}
+    assert Differ.Diffable.Any.optimize_op(1, {:del, 2}, 3) == {:ok, {:del, 2}}
+  end
 end
