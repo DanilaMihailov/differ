@@ -5,7 +5,7 @@ defmodule Differ do
   @moduledoc "Module that computes `diff` for terms"
 
   @doc """
-  Returns diff between 2 terms of same type
+  Returns diff between 2 terms that implement `Differ.Diffable` protocol
 
   ## Examples
       iex> Differ.diff(%{key: "value"}, %{key: "value"})
