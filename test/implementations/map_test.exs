@@ -1,6 +1,50 @@
 defmodule Differ.MapTest do
   use ExUnit.Case
 
+  setup do
+    old_map = %{
+      "changed" => "sval",
+      "removed" => "sf",
+      "other" => 1,
+      "nested" => %{
+        "same" => 0,
+        "del this" => 1,
+        "update this" => "old map"
+      },
+      akey: %{
+        bkey: %{
+          ckey: %{
+            dkey: %{
+              ekey: [1, 2, 3]
+            }
+          }
+        }
+      }
+    }
+
+    new_map = %{
+      "changed" => "xval",
+      "added" => "new",
+      "other" => 1,
+      "nested" => %{
+        "same" => 0,
+        "update this" => "new map",
+        "new" => 9
+      },
+      akey: %{
+        bkey: %{
+          ckey: %{
+            dkey: %{
+              ekey: [1]
+            }
+          }
+        }
+      }
+    }
+
+    [old: old_map, new: new_map]
+  end
+
   test "empty maps" do
     diff = Differ.diff(%{}, %{})
 
@@ -10,80 +54,58 @@ defmodule Differ.MapTest do
   end
 
   test "equal maps" do
-    old_str = %{key: "val"}
-    new_str = %{key: "val"}
+    old_map = %{key: "val"}
+    new_map = %{key: "val"}
 
-    diff = Differ.diff(old_str, new_str)
+    diff = Differ.diff(old_map, new_map)
 
     assert diff == [eq: %{key: "val"}]
-    assert {:ok, new_str} == Differ.patch(old_str, diff)
-    assert {:ok, old_str} == Differ.revert(old_str, diff)
+    assert {:ok, new_map} == Differ.patch(old_map, diff)
+    assert {:ok, old_map} == Differ.revert(old_map, diff)
   end
 
-  test "simple" do
-    old_map = %{
-      "changed" => "sval",
-      "removed" => "sf",
-      "other" => 1
-    }
+  test "map diffs are patchable", context do
+    old_map = context[:old]
+    new_map = context[:new]
 
-    new_map = %{
-      "changed" => "xval",
-      "added" => "new",
-      "other" => 1
-    }
+    diff = Differ.diff(old_map, new_map)
+    op_diff = Differ.optimize(diff)
+    non_rev_diff = Differ.optimize(diff, 3)
+    invalid_diff = [{:some_random_operation, "do it"} | diff]
 
-    output = Differ.diff(old_map, new_map)
+    assert {:ok, new_map} == Differ.patch(old_map, diff)
+    assert {:ok, new_map} == Differ.patch(old_map, op_diff)
+    assert {:ok, new_map} == Differ.patch(old_map, non_rev_diff)
 
-    expected_output = [
-      {"other", :eq, 1},
-      {"changed", :diff, [del: "s", ins: "x", eq: "val"]},
-      {"added", :ins, "new"},
-      {"removed", :del, "sf"}
-    ]
-
-    assert expected_output == output
+    assert {:error, "Unknown operation"} ==
+             Differ.patch(old_map, invalid_diff)
   end
 
-  test "nested maps" do
-    old_map = %{
-      "changed" => "sval",
-      "removed" => "sf",
-      "other" => 1,
-      "nested" => %{
-        "same" => 0,
-        "del this" => 1,
-        "update this" => "old str"
-      }
-    }
+  test "map diffs are revertable", context do
+    old_map = context[:old]
+    new_map = context[:new]
 
-    new_map = %{
-      "changed" => "xval",
-      "added" => "new",
-      "other" => 1,
-      "nested" => %{
-        "same" => 0,
-        "update this" => "new str",
-        "new" => 9
-      }
-    }
+    diff = Differ.diff(old_map, new_map)
+    op_diff = Differ.optimize(diff)
+    non_rev_diff = Differ.optimize(diff, 3)
+    invalid_diff = [{:some_random_operation, "do it"} | diff]
 
-    output = Differ.diff(old_map, new_map)
+    assert {:ok, old_map} == Differ.revert(new_map, diff)
+    assert {:ok, old_map} == Differ.revert(new_map, op_diff)
 
-    expected_output = [
-      {"other", :eq, 1},
-      {"nested", :diff,
-       [
-         {"update this", :diff, [del: "old", ins: "new", eq: " str"]},
-         {"same", :eq, 0},
-         {"new", :ins, 9},
-         {"del this", :del, 1}
-       ]},
-      {"changed", :diff, [del: "s", ins: "x", eq: "val"]},
-      {"added", :ins, "new"},
-      {"removed", :del, "sf"}
-    ]
+    assert {:error, "Operation :remove is not revertable"} ==
+             Differ.revert(new_map, non_rev_diff)
 
-    assert output == expected_output
+    assert {:error, "Unknown operation"} ==
+             Differ.revert(new_map, invalid_diff)
+  end
+
+  test "map diff without deletion are always revertable" do
+    old_map = %{k1: "val", k2: "val"}
+    new_map = %{k1: "val", k2: "val", k3: "val"}
+
+    diff = Differ.diff(old_map, new_map) |> Differ.optimize(3)
+
+    assert {:ok, old_map} == Differ.revert(new_map, diff)
   end
 end
