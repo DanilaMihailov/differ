@@ -17,7 +17,8 @@ defmodule Differ.MixProject do
         "coveralls.detail": :test,
         "coveralls.post": :test,
         "coveralls.html": :test
-      ]
+      ],
+      dialyzer: [flags: [:unmatched_returns, :error_handling, :race_conditions, :underspecs]]
     ]
   end
 
