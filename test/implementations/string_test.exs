@@ -1,6 +1,25 @@
 defmodule Differ.StringTest do
   use ExUnit.Case
 
+  test "empty strings" do
+    diff = Differ.diff("", "")
+
+    assert diff == []
+    assert {:ok, ""} == Differ.patch("", diff)
+    assert {:ok, ""} == Differ.revert("", diff)
+  end
+
+  test "equal strings" do
+    old_str = "test"
+    new_str = "test"
+
+    diff = Differ.diff(old_str, new_str)
+
+    assert diff == [eq: "test"]
+    assert {:ok, new_str} == Differ.patch(old_str, diff)
+    assert {:ok, old_str} == Differ.revert(old_str, diff)
+  end
+
   test "string diffs are patchable" do
     old_str = "My name is Dan"
     new_str = "Hello, I'am Danila"
