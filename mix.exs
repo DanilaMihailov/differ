@@ -37,15 +37,15 @@ defmodule Differ.MixProject do
       # generating documentation (mix docs)
       {:ex_doc, "~> 0.21", only: :dev, runtime: false},
       # test coverage (mix coveralls.html or mix test --cover)
-      {:excoveralls, "~> 0.12.1", only: :test},
+      {:excoveralls, "~> 0.12.1", only: :test, runtime: false},
       # documentation check (mix inch)
-      {:inch_ex, github: "rrrene/inch_ex", only: [:dev, :test]},
+      {:inch_ex, github: "rrrene/inch_ex", only: [:dev, :test], runtime: false},
       # static analysis (mix dialyzer)
       {:dialyxir, "~> 1.0.0-rc.7", only: [:dev], runtime: false},
       # static analysis and style checks (mix credo --strict)
       {:credo, "~> 1.1.0", only: [:dev, :test], runtime: false},
       # benchmarks (mix run benchmarks/script_name.exs)
-      {:benchee, "~> 1.0", only: :dev}
+      {:benchee, "~> 1.0", only: :dev, runtime: false}
     ]
   end
 
