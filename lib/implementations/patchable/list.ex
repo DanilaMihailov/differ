@@ -1,13 +1,11 @@
 defimpl Differ.Patchable, for: List do
   def revert_op(_val, {op, val}) do
-    new_op =
-      case op do
-        :del -> :ins
-        :ins -> :del
-        _ -> op
-      end
-
-    {new_op, val}
+    case op do
+      :remove -> {:error, "Operation :remove is not revertable"}
+      :del -> {:ok, {:ins, val}}
+      :ins -> {:ok, {:del, val}}
+      _ -> {:ok, {op, val}}
+    end
   end
 
   # FIXME: duplicates value not working right
@@ -39,4 +37,6 @@ defimpl Differ.Patchable, for: List do
   def perform(old_list, {:diff, diff}, {_, index}) do
     {:diff, diff, Enum.at(old_list, index), {:replace}}
   end
+
+  def perform(_, _, _), do: {:error, "Unknown operation"}
 end
