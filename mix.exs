@@ -18,7 +18,9 @@ defmodule Differ.MixProject do
         "coveralls.post": :test,
         "coveralls.html": :test
       ],
-      dialyzer: [flags: [:unmatched_returns, :error_handling, :race_conditions, :underspecs]]
+      dialyzer: [flags: [:unmatched_returns, :error_handling, :race_conditions, :underspecs]],
+      # for testing protocols
+      consolidate_protocols: Mix.env() != :test
     ]
   end
 
