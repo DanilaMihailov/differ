@@ -171,7 +171,7 @@ defmodule Differ do
             Patchable.perform(old_val, new_op, acc) |> match_res(old_val, acc, revert)
 
           _ ->
-            {:halt, res}
+            {:halt, diff_res}
         end
 
       _ ->
