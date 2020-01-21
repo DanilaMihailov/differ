@@ -40,6 +40,11 @@ defprotocol Differ.Diffable do
 
   @doc """
   Returns a list of tuples that represents an edit script
+
+  When implementing this function on a new type, you should always implement this
+  ```elixir
+  def diff(term, term), do: [eq: term]
+  ```
   """
   @spec diff(t(), t()) :: diff
   def diff(term1, term2)
