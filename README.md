@@ -1,21 +1,31 @@
 # Differ
 
-**TODO: Add description**
+Small library for creating diffs and applying them
+
+```elixir
+iex> Differ.diff("Hello!", "Hey!")
+[eq: "He", del: "llo", ins: "y", eq: "!"]
+
+iex> Differ.patch("Hello!", [eq: "He", del: "llo", ins: "y", eq: "!"])
+"Hey!"
+```
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+The package can be installed
 by adding `differ` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:differ, "~> 0.1.0"}
+    {:differ, "~> 1.0"}
   ]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/differ](https://hexdocs.pm/differ).
+## Usage
+
+TODO
+
+Documentation can be found at [https://hexdocs.pm/differ](https://hexdocs.pm/differ).
 
