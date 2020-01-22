@@ -2,56 +2,23 @@ defmodule Differ do
   alias Differ.Diffable
   alias Differ.Patchable
 
-  @doc false
-  defmacro __using__(_opts) do
-    quote do
-      defimpl Diffable do
-        def optimize_op(val, op, level), do: Diffable.Map.optimize_op(val, op, level)
-
-        def diff(s, s), do: [eq: s]
-
-        def diff(old, new) do
-          Differ.diff(Map.from_struct(old), Map.from_struct(new))
-        end
-      end
-
-      defimpl Patchable do
-        def perform(old_val, op, new_val), do: Patchable.Map.perform(old_val, op, new_val)
-        def revert_op(val, op), do: Patchable.Map.revert_op(val, op)
-      end
-    end
-  end
-
   @moduledoc """
   Module that computes `diff` for terms
 
   # Using with structs
-
-  Imagine you have defined a struct called `User`.
-
-  ```elixir
-  defmodule UserA do
-    defstruct name: "", age: 21
-  end
-  ```
-
-  Now if you try to use it with `Differ`, you will get `nil` as a result
-      iex> Differ.diff(%UserA{name: "John"}, %UserA{name: "John Smith"})
-      nil
-
-  But if you want to use `Differ` with structs, you can do it like this
+  
+  It is possible to use `Differ` with structs, you need to derive default implementation
+  for `Differ.Diffable` and `Differ.Patchable` protocols:
   ```elixir
   defmodule User do
-    use Differ # add macro here and differ will treat your structs as maps
+    @derive [Differ.Diffable, Differ.Patchable]
     defstruct name: "", age: 21
   end
   ```
-  And now you can call
+  And now you can call `Differ.diff/2` with your structs:
       iex> Differ.diff(%User{name: "John"}, %User{name: "John Smith"})
       [{:name, :diff, [eq: "John", ins: " Smith"]}, {:age, :eq, 21}]
 
-  Under the hood `Differ` adds implementation for `Differ.Diffable` and `Differ.Patchable`
-  to a given struct
   """
 
   @doc """

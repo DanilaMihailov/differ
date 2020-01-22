@@ -2,13 +2,8 @@ defmodule DifferTest do
   use ExUnit.Case
 
   # used in doc tests
-  defmodule UserA do
-    defstruct name: "John", age: 21
-  end
-
-  # used in doc tests
   defmodule User do
-    use Differ
+    @derive [Differ.Diffable, Differ.Patchable]
     defstruct name: "John", age: 21
   end
 
@@ -17,12 +12,12 @@ defmodule DifferTest do
 
   # used only in this test
   defmodule Smth do
-    use Differ
+    @derive [Differ.Diffable, Differ.Patchable]
     defstruct val: nil
   end
 
   defmodule Obj do
-    use Differ
+    @derive [Differ.Diffable, Differ.Patchable]
     defstruct name: "John", age: 21, parents: [], smth: %Smth{}
   end
 
