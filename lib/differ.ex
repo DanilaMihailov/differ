@@ -199,8 +199,9 @@ defmodule Differ do
       end)
 
     case result do
-      {:error, _msg} -> result
-      {str, _other} -> {:ok, str}
+      {:error, _} -> result
+      {:conflict, _} -> result
+      {val, _} -> {:ok, val}
     end
   end
 end

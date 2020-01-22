@@ -62,4 +62,16 @@ defmodule Differ.StringTest do
 
     assert {:ok, old_str} == Differ.revert(new_str, diff)
   end
+
+  test "string conflict" do
+    old_str1 = "My name is Jeff"
+    old_str2 = "My name is Dan"
+    new_str = "My te is Carl"
+
+    diff = Differ.diff(old_str1, new_str)
+
+    res = Differ.patch(old_str2, diff)
+    assert elem(res, 0) == :conflict
+
+  end
 end
