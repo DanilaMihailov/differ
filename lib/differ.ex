@@ -57,6 +57,8 @@ defmodule Differ do
   @doc """
   Returns diff between 2 terms that implement `Differ.Diffable` protocol
 
+  Diff here is *edit script*, that should be compatible with `List.myers_difference/3`
+
   ## Examples
       iex> Differ.diff(%{key: "value"}, %{key: "value"})
       [eq: %{key: "value"}]
