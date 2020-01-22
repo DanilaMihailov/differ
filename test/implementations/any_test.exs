@@ -13,9 +13,9 @@ defmodule Differ.AnyTest do
     assert {:ok, nil} == Differ.revert(nil, diff)
   end
 
-  test "equal numbers" do
-    old_num = 123
-    new_num = 123
+  test "equal vals" do
+    old_num = %Some{}
+    new_num = %Some{}
 
     diff = Differ.diff(old_num, new_num)
 
@@ -25,7 +25,7 @@ defmodule Differ.AnyTest do
   end
 
   test "internal" do
-    assert Differ.Patchable.Any.revert_op(1, {:del, 2}) == {:ok, {:del, 2}}
-    assert Differ.Diffable.Any.optimize_op(1, {:del, 2}, 3) == {:ok, {:del, 2}}
+    assert Differ.Patchable.Any.revert_op(%Some{}, {:del, 2}) == {:ok, {:del, 2}}
+    assert Differ.Diffable.Any.optimize_op(%Some{}, {:del, 2}, 3) == {:ok, {:del, 2}}
   end
 end
