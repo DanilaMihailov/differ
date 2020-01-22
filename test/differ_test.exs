@@ -28,7 +28,12 @@ defmodule DifferTest do
 
   test "diff structs" do
     user = %Obj{name: "John", age: 21, parents: [%Obj{name: 1}, %Obj{name: 2}]}
-    user_changed = %Obj{name: "John Smith", age: 21, parents: [%Obj{name: 4, smth: %Smth{val: [%{lol: 1}]}}, %Obj{name: 2}]}
+
+    user_changed = %Obj{
+      name: "John Smith",
+      age: 21,
+      parents: [%Obj{name: 4, smth: %Smth{val: [%{lol: 1}]}}, %Obj{name: 2}]
+    }
 
     diff = Differ.diff(user, user_changed)
     diff_op = Differ.optimize(diff)

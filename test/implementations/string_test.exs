@@ -72,6 +72,5 @@ defmodule Differ.StringTest do
 
     res = Differ.patch(old_str2, diff)
     assert elem(res, 0) == :conflict
-
   end
 end

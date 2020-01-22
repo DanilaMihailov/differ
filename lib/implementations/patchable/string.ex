@@ -32,6 +32,7 @@ defimpl Differ.Patchable, for: BitString do
   def perform(_, {:eq, val} = op, {new_str, index}) do
     len = String.length(val)
     part = String.slice(new_str, index, len)
+
     case part do
       ^val -> {:ok, {new_str, index + len}}
       _ -> {:conflict, {op, part}}
