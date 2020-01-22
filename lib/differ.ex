@@ -142,12 +142,12 @@ defmodule Differ do
       iex> Differ.optimize(regular_diff)
       [{"new", :ins, "val"}]
 
-      iex> diff = Differ.diff("Somewhat long string with a litle change there", "Somewhat long string with a litle change here")
-      [eq: "Somewhat long string with a litle change ", del: "t", eq: "here"]
+      iex> diff = Differ.diff("Somewhat long string with a litle change athere", "Somewhat long string with a litle change here")
+      [eq: "Somewhat long string with a litle change ", del: "at", eq: "here"]
       iex> Differ.optimize(diff, 2)
-      [skip: 41, del: "t", skip: 4]
+      [skip: 41, del: "at", skip: 4]
       iex> Differ.optimize(diff, 3)
-      [skip: 41, remove: 1, skip: 4]
+      [skip: 41, remove: 2, skip: 4]
   """
   @spec optimize(Diffable.diff(), Diffable.level()) :: Diffable.diff()
   def optimize(diff, level \\ 1) do
