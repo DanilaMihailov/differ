@@ -6,7 +6,7 @@ defmodule Differ do
   Module that computes `diff` for terms
 
   # Using with structs
-  
+
   It is possible to use `Differ` with structs, you need to derive default implementation
   for `Differ.Diffable` and `Differ.Patchable` protocols:
   ```elixir

@@ -1,5 +1,6 @@
 defimpl Differ.Patchable, for: Any do
   alias Differ.Patchable
+
   defmacro __deriving__(module, _struct, _options) do
     quote do
       defimpl Patchable, for: unquote(module) do
@@ -8,6 +9,7 @@ defimpl Differ.Patchable, for: Any do
       end
     end
   end
+
   def perform(_old_val, _op, acc), do: {:ok, acc}
   def revert_op(_val, op), do: {:ok, op}
 end
