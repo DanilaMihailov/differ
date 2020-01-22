@@ -12,15 +12,24 @@ defimpl Differ.Patchable, for: Map do
 
   def perform(_, {:eq, _} = op, {new_map, _}), do: {:ok, {new_map, op}}
 
-  def perform(_, {key, :del, _} = op, {new_map, prev_op}) do
+  def perform(_, {key, :del, val} = op, {new_map, prev_op}) do
     case prev_op do
       {^key, :ins, _} -> {:ok, {new_map, op}}
-      _ -> {:ok, {Map.delete(new_map, key), op}}
+      _ -> 
+        old_val = Map.get(new_map, key)
+        case old_val do
+          ^val -> {:ok, {Map.delete(new_map, key), op}}
+          _ -> {:conflict, {op, old_val}}
+        end
     end
   end
 
-  def perform(_, {_, :eq, _} = op, {new_map, _}) do
-    {:ok, {new_map, op}}
+  def perform(_, {key, :eq, val} = op, {new_map, _}) do
+    old_val = Map.get(new_map, key)
+    case old_val do
+      ^val -> {:ok, {new_map, op}}
+      _ -> {:conflict, {op, old_val}}
+    end
   end
 
   def perform(_, {key, :ins, val} = op, {new_map, _}) do
