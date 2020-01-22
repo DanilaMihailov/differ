@@ -75,9 +75,9 @@ defmodule Differ do
   Applies diff and returns patched value
 
   ## Examples
-      iex(1)> old_list = ["22", "1"]
-      iex(1)> diff = Differ.diff old_list, ["2", "1", "3"]
-      iex(2)> Differ.patch old_list, diff
+      iex> old_list = ["22", "1"]
+      iex> diff = Differ.diff(old_list, ["2", "1", "3"])
+      iex> Differ.patch(old_list, diff)
       {:ok, ["2", "1", "3"]}
   """
   @spec patch(Diffable.t(), Diffable.diff()) :: {:ok, Diffable.t()} | {:error, String.t()}
@@ -89,10 +89,10 @@ defmodule Differ do
   Reverts diff and returns patched value
 
   ## Examples
-      iex(1)> old_list = ["22", "1"]
-      iex(1)> new_list = ["2", "1", "3"]
-      iex(1)> diff = Differ.diff old_list, new_list 
-      iex(2)> Differ.revert new_list, diff
+      iex> old_list = ["22", "1"]
+      iex> new_list = ["2", "1", "3"]
+      iex> diff = Differ.diff(old_list, new_list)
+      iex> Differ.revert(new_list, diff)
       {:ok, ["22", "1"]}
   """
   @spec revert(Diffable.t(), Diffable.diff()) :: {:ok, Diffable.t()} | {:error, String.t()}
