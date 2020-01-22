@@ -1,11 +1,13 @@
 old_user = %{name: "Ron Artest", teams: ["Bulls", "Pacers"], height: 201}
 new_user = %{name: "Metta World Peace", teams: ["Bulls", "Pacers", "Kings", "Rockets"], height: 201, weight: 118}
 
+limit = 100
+
 diff = Differ.diff(old_user, new_user)
-l0 = List.duplicate(diff, 10)
-l1 = diff |> Differ.optimize(1) |> List.duplicate(10)
-l2 = diff |> Differ.optimize(2) |> List.duplicate(10)
-l3 = diff |> Differ.optimize(3) |> List.duplicate(10)
+l0 = List.duplicate(diff, limit)
+l1 = diff |> Differ.optimize(1) |> List.duplicate(limit)
+l2 = diff |> Differ.optimize(2) |> List.duplicate(limit)
+l3 = diff |> Differ.optimize(3) |> List.duplicate(limit)
 
 Benchee.run(
   %{
