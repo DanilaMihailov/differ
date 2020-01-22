@@ -11,6 +11,7 @@ defmodule Differ.MapTest do
         "del this" => 1,
         "update this" => "old map"
       },
+      easy: 1,
       akey: %{
         bkey: %{
           ckey: %{
@@ -32,6 +33,7 @@ defmodule Differ.MapTest do
         "update this" => "new map",
         "new" => 9
       },
+      easy: 2,
       akey: %{
         bkey: %{
           ckey: %{

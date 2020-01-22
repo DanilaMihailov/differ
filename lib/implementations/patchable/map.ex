@@ -1,5 +1,5 @@
 defimpl Differ.Patchable, for: Map do
-  def revert_op(_val, {key, op, val}) do
+  def revert_op(_, {key, op, val}) do
     case op do
       :remove -> {:error, "Operation :remove is not revertable"}
       :del -> {:ok, {key, :ins, val}}
@@ -10,22 +10,25 @@ defimpl Differ.Patchable, for: Map do
 
   def revert_op(_, op), do: {:ok, op}
 
-  def perform(_old_map, {:eq, _val}, {new_map, _}), do: {:ok, {new_map, nil}}
+  def perform(_, {:eq, _} = op, {new_map, _}), do: {:ok, {new_map, op}}
 
-  def perform(_old_map, {key, :del, _val}, {new_map, _}) do
-    {:ok, {Map.delete(new_map, key), nil}}
+  def perform(_, {key, :del, _} = op, {new_map, prev_op}) do
+    case prev_op do
+      {^key, :ins, _} -> {:ok, {new_map, op}}
+      _ -> {:ok, {Map.delete(new_map, key), op}}
+    end
   end
 
-  def perform(_old_map, {_key, :eq, _val}, {new_map, _}) do
-    {:ok, {new_map, nil}}
+  def perform(_, {_, :eq, _} = op, {new_map, _}) do
+    {:ok, {new_map, op}}
   end
 
-  def perform(_old_map, {key, :ins, val}, {new_map, _}) do
-    {:ok, {Map.put(new_map, key, val), nil}}
+  def perform(_, {key, :ins, val} = op, {new_map, _}) do
+    {:ok, {Map.put(new_map, key, val), op}}
   end
 
-  def perform(old_map, {key, :diff, diff}, _acc) do
-    {:diff, diff, Map.get(old_map, key), {key, :ins}}
+  def perform(_, {key, :diff, diff}, {new_map, _}) do
+    {:diff, diff, Map.get(new_map, key), {key, :ins}}
   end
 
   def perform(_, _, _), do: {:error, "Unknown operation"}

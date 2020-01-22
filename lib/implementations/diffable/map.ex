@@ -26,7 +26,7 @@ defimpl Differ.Diffable, for: Map do
           [{key, :eq, val} | ops]
 
         {:ok, old} ->
-          [nested_diff(key, old, val) | ops]
+          nested_diff(key, old, val) ++ ops
       end
     end)
   end
@@ -35,8 +35,8 @@ defimpl Differ.Diffable, for: Map do
     diff = Differ.Diffable.diff(old, new)
 
     case diff do
-      nil -> {key, :ins, new}
-      _ -> {key, :diff, diff}
+      nil -> [{key, :del, old}, {key, :ins, new}]
+      _ -> [{key, :diff, diff}]
     end
   end
 end
