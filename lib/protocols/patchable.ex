@@ -18,7 +18,6 @@ defprotocol Differ.Patchable do
 
   Function should return tuple with `:ok` atom and tuple `{result, anything}`
   """
-  # TODO: conflict on patch?
   @spec perform(t(), Diffable.operation(), tuple) ::
           {:ok, {term, any}} | {:error, reason()} | {:conflict, any}
   @spec perform(t(), {term, :diff, Diffable.diff()}, tuple) ::
