@@ -1,5 +1,5 @@
 defimpl Differ.Patchable, for: List do
-  def revert_op(_val, {op, val}) do
+  def revert_op(_, {op, val}) do
     case op do
       :remove -> {:error, "Operation :remove is not revertable"}
       :del -> {:ok, {:ins, val}}
@@ -8,20 +8,27 @@ defimpl Differ.Patchable, for: List do
     end
   end
 
-  # FIXME: duplicates value not working right
-  def perform(_old_list, {:del, val}, {new_list, index}) do
-    {:ok, {new_list -- val, index}}
+  # TODO: add conflict checks
+  def perform(_, {:del, val}, {new_list, index}) do
+    perform(new_list, {:remove, Enum.count(val)}, {new_list, index})
   end
 
-  def perform(_old_list, {:eq, val}, {new_list, index}) do
+  def perform(_, {:remove, len}, {nlist, index}) do
+    {before, next} = Enum.split(nlist, index)
+    {_, add} = Enum.split(next, len)
+
+    {:ok, {before ++ add, index}}
+  end
+
+  def perform(_, {:eq, val}, {new_list, index}) do
     {:ok, {new_list, Enum.count(val) + index}}
   end
 
-  def perform(_old_list, {:skip, val}, {new_list, index}) do
+  def perform(_, {:skip, val}, {new_list, index}) do
     {:ok, {new_list, index + val}}
   end
 
-  def perform(_old_list, {:ins, val}, {new_list, index}) do
+  def perform(_, {:ins, val}, {new_list, index}) do
     {new_list, _} =
       Enum.reduce(List.wrap(val), {new_list, index}, fn v, {l, i} ->
         {List.insert_at(l, i, v), i + 1}
@@ -30,12 +37,7 @@ defimpl Differ.Patchable, for: List do
     {:ok, {new_list, index + Enum.count(val)}}
   end
 
-  def perform(_, {:remove, len}, {nlist, index}) do
-    slice = Enum.slice(nlist, index, len)
-    {:ok, {nlist -- slice, index}}
-  end
-
-  def perform(_old_list, {:replace, val}, {new_list, index}) do
+  def perform(_, {:replace, val}, {new_list, index}) do
     {:ok, {List.replace_at(new_list, index, val), index + 1}}
   end
 
