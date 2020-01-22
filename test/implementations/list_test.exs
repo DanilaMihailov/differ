@@ -48,7 +48,9 @@ defmodule Differ.ListTest do
 
     assert {:ok, old_list} == Differ.revert(new_list, diff)
     assert {:ok, old_list} == Differ.revert(new_list, op_diff)
-    assert {:error, "Operation :remove is not revertable"} == Differ.revert(new_list, non_rev_diff)
+
+    assert {:error, "Operation :remove is not revertable"} ==
+             Differ.revert(new_list, non_rev_diff)
 
     assert {:error, "Unknown operation"} ==
              Differ.revert(old_list, invalid_diff)
