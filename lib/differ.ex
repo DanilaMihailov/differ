@@ -47,9 +47,16 @@ defmodule Differ do
       iex> Differ.patch(old_list, diff)
       {:ok, ["2", "1", "3"]}
   """
-  @spec patch(Diffable.t(), Diffable.diff()) :: {:ok, Diffable.t()} | {:error, String.t()}
+  @spec patch(Patchable.t(), Diffable.diff()) :: {:ok, Patchable.t()} | {:error, String.t()}
   def patch(obj, diff) do
     apply_diff(obj, diff, false)
+  end
+
+  @spec patch(Patchable.t(), Diffable.diff()) :: Patchable.t()
+  def patch!(obj, diff) do
+    case patch(obj, diff) do
+      {:ok, val} -> val
+    end
   end
 
   @doc """
@@ -62,9 +69,16 @@ defmodule Differ do
       iex> Differ.revert(new_list, diff)
       {:ok, ["22", "1"]}
   """
-  @spec revert(Diffable.t(), Diffable.diff()) :: {:ok, Diffable.t()} | {:error, String.t()}
+  @spec revert(Patchable.t(), Diffable.diff()) :: {:ok, Patchable.t()} | {:error, String.t()}
   def revert(obj, diff) do
     apply_diff(obj, diff, true)
+  end
+
+  @spec revert(Patchable.t(), Diffable.diff()) :: Patchable.t()
+  def revert!(obj, diff) do
+    case revert(obj, diff) do
+      {:ok, val} -> val
+    end
   end
 
   defp optimize_op(op, level) do
