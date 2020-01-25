@@ -52,7 +52,8 @@ defmodule Differ do
     apply_diff(obj, diff, false)
   end
 
-  @spec patch(Patchable.t(), Diffable.diff()) :: Patchable.t()
+  @doc "Same as `Differ.patch/2`, but returns value and throws on error"
+  @spec patch!(Patchable.t(), Diffable.diff()) :: Patchable.t()
   def patch!(obj, diff) do
     case patch(obj, diff) do
       {:ok, val} -> val
@@ -74,7 +75,8 @@ defmodule Differ do
     apply_diff(obj, diff, true)
   end
 
-  @spec revert(Patchable.t(), Diffable.diff()) :: Patchable.t()
+  @doc "Same as `Differ.revert/2`, but returns value and throws on error"
+  @spec revert!(Patchable.t(), Diffable.diff()) :: Patchable.t()
   def revert!(obj, diff) do
     case revert(obj, diff) do
       {:ok, val} -> val
