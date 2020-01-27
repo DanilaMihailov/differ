@@ -99,9 +99,6 @@ defmodule Differ do
         new_op = optimize(diff, level)
         {key, :diff, new_op}
 
-      {_key, :remove, _val} ->
-        op
-
       {_key, a, _val} when is_atom(a) ->
         Diffable.optimize_op(%{}, op, level)
 
