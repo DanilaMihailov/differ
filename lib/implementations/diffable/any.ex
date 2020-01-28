@@ -8,17 +8,10 @@ defimpl Differ.Diffable, for: Any do
 
         def diff(old, new) do
           opts = unquote(options)
-          diff = Differ.Diffable.Map.diff(Map.from_struct(old), Map.from_struct(new))
-          case Keyword.fetch(opts, :skip) do
-            {:ok, skip} ->
-              skip = MapSet.new(skip)
-              Enum.reject(diff, fn op -> 
-                case op do
-                  {key, _, _} -> MapSet.member?(skip, key)
-                end
-              end)
-            _ -> diff
-          end
+          skip = Keyword.get(opts, :skip, [])
+          old = Map.from_struct(old) |> Map.drop(skip)
+          new = Map.from_struct(new) |> Map.drop(skip)
+          diff = Differ.Diffable.Map.diff(old, new)
         end
       end
     end
