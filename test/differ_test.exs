@@ -50,8 +50,11 @@ defmodule DifferTest do
 
   test "diff with skips" do
     old = %WithSkip{}
-    new = %WithSkip{old | key: "newval", skipthis: [1,2]}
+    new = %WithSkip{old | key: "newval", skipthis: [1, 2]}
 
-    assert Differ.diff(old, new) == [{:key2, :eq, 0}, {:key, :diff, [ins: "new", eq: "val", del: "1"]}]
+    assert Differ.diff(old, new) == [
+             {:key2, :eq, 0},
+             {:key, :diff, [ins: "new", eq: "val", del: "1"]}
+           ]
   end
 end
