@@ -19,6 +19,18 @@ defmodule Differ do
       iex> Differ.diff(%User{name: "John"}, %User{name: "John Smith"})
       [{:name, :diff, [eq: "John", ins: " Smith"]}, {:age, :eq, 21}]
 
+  You can skip some fields aswell (e.g. timestamps, id), by using `skip` option, when deriving default implementation
+  ```elixir
+  @derive [{Differ.Diffable, skip: [:updated_at, :diffs]}, Differ.Patchable]
+  schema "posts" do
+    field :content, :string
+    field :tags, {:array, :string}
+    field :title, :string
+    field :diffs, {:array, Diff}, default: []
+
+    timestamps()
+  end
+  ```
   """
 
   @doc """

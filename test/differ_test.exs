@@ -21,6 +21,11 @@ defmodule DifferTest do
     defstruct name: "John", age: 21, parents: [], smth: %Smth{}
   end
 
+  defmodule WithSkip do
+    @derive [{Differ.Diffable, skip: [:skipthis, :andthis]}, Differ.Patchable]
+    defstruct key: "val1", key2: 0, skipthis: [], andthis: nil
+  end
+
   test "diff structs" do
     user = %Obj{name: "John", age: 21, parents: [%Obj{name: 1}, %Obj{name: 2}]}
 
@@ -41,5 +46,12 @@ defmodule DifferTest do
     assert Differ.revert(user_changed, diff) == {:ok, user}
 
     assert Differ.diff(%Obj{}, %Obj{}) == [eq: %Obj{}]
+  end
+
+  test "diff with skips" do
+    old = %WithSkip{}
+    new = %WithSkip{old | key: "newval", skipthis: [1,2]}
+
+    assert Differ.diff(old, new) == [{:key2, :eq, 0}, {:key, :diff, [ins: "new", eq: "val", del: "1"]}]
   end
 end
