@@ -7,12 +7,24 @@ defimpl Differ.Patchable, for: Map do
       _ -> {:ok, {key, op, val}}
     end
   end
-
   def revert_op(_, op), do: {:ok, op}
 
-  def perform(_, {:eq, _} = op, {new_map, _}), do: {:ok, {new_map, op}}
+  defp default_callback(op) do
+    case op do
+      {:del, _} -> ""
+      {:remove, _} -> ""
+      {:eq, val} -> val
+      {:skip, val} -> val
+      {:ins, val} -> val
+    end
+  end
 
-  def perform(_, {key, :del, val} = op, {new_map, prev_op}) do
+  def perform(str, op, acc, cb \\ &default_callback/1)
+
+
+  def perform(_, {:eq, _} = op, {new_map, _}, _cb), do: {:ok, {new_map, op}}
+
+  def perform(_, {key, :del, val} = op, {new_map, prev_op}, _cb) do
     case prev_op do
       {^key, :ins, _} ->
         {:ok, {new_map, op}}
@@ -27,7 +39,7 @@ defimpl Differ.Patchable, for: Map do
     end
   end
 
-  def perform(_, {key, :eq, val} = op, {new_map, _}) do
+  def perform(_, {key, :eq, val} = op, {new_map, _}, _cb) do
     old_val = Map.get(new_map, key)
 
     case old_val do
@@ -36,13 +48,13 @@ defimpl Differ.Patchable, for: Map do
     end
   end
 
-  def perform(_, {key, :ins, val} = op, {new_map, _}) do
+  def perform(_, {key, :ins, val} = op, {new_map, _}, _cb) do
     {:ok, {Map.put(new_map, key, val), op}}
   end
 
-  def perform(_, {key, :diff, diff}, {new_map, _}) do
+  def perform(_, {key, :diff, diff}, {new_map, _}, _cb) do
     {:diff, diff, Map.get(new_map, key), {key, :ins}}
   end
 
-  def perform(_, _, _), do: {:error, "Unknown operation"}
+  def perform(_, _, _, _cb), do: {:error, "Unknown operation"}
 end

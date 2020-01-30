@@ -61,7 +61,7 @@ defmodule Differ do
   """
   @spec patch(Patchable.t(), Diffable.diff()) :: {:ok, Patchable.t()} | {:error, String.t()}
   def patch(obj, diff) do
-    apply_diff(obj, diff, false)
+    apply_diff(obj, diff, false, nil)
   end
 
   @doc "Same as `Differ.patch/2`, but returns value and throws on error"
@@ -84,7 +84,7 @@ defmodule Differ do
   """
   @spec revert(Patchable.t(), Diffable.diff()) :: {:ok, Patchable.t()} | {:error, String.t()}
   def revert(obj, diff) do
-    apply_diff(obj, diff, true)
+    apply_diff(obj, diff, true, nil)
   end
 
   @doc "Same as `Differ.revert/2`, but returns value and throws on error"
@@ -151,18 +151,28 @@ defmodule Differ do
     end)
   end
 
-  defp match_res(res, old_val, acc, revert) do
+  def show_diff(term, diff, cb, opts \\ []) do
+    revert? = Keyword.get(opts, :revert, true)
+    term = if revert?, do: revert!(term, diff), else: term
+    apply_diff(term, diff, false, cb)
+  end
+
+  defp match_res(res, old_val, acc, revert, cb) do
     case res do
       {:ok, new_acc} ->
         {:cont, new_acc}
 
       {:diff, diff, old, op} ->
-        diff_res = apply_diff(old, diff, revert)
+        diff_res = apply_diff(old, diff, revert, cb)
 
         case diff_res do
           {:ok, val} ->
             new_op = Tuple.append(op, val)
-            Patchable.perform(old_val, new_op, acc) |> match_res(old_val, acc, revert)
+            if is_nil(cb) do
+              Patchable.perform(old_val, new_op, acc)
+            else
+              Patchable.perform(old_val, new_op, acc, cb)
+            end |> match_res(old_val, acc, revert, cb)
 
           _ ->
             {:halt, diff_res}
@@ -173,17 +183,21 @@ defmodule Differ do
     end
   end
 
-  defp apply_diff(nil, _, _), do: {:ok, nil}
-  defp apply_diff(v, nil, _), do: {:ok, v}
+  defp apply_diff(nil, _, _, _), do: {:ok, nil}
+  defp apply_diff(v, nil, _, _), do: {:ok, v}
 
-  defp apply_diff(old_val, diff, revert) do
+  defp apply_diff(old_val, diff, revert, cb) do
     result =
       Enum.reduce_while(diff, {old_val, 0}, fn op, acc ->
         op = if revert, do: Patchable.revert_op(old_val, op), else: {:ok, op}
 
         case op do
           {:ok, op} ->
-            Patchable.perform(old_val, op, acc) |> match_res(old_val, acc, revert)
+            if is_nil(cb) do
+              Patchable.perform(old_val, op, acc)
+            else
+              Patchable.perform(old_val, op, acc, cb)
+            end |> match_res(old_val, acc, revert, cb)
 
           _ ->
             {:halt, op}
