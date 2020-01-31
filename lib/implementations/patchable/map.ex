@@ -7,6 +7,7 @@ defimpl Differ.Patchable, for: Map do
       _ -> {:ok, {key, op, val}}
     end
   end
+
   def revert_op(_, op), do: {:ok, op}
 
   defp default_callback(op) do
@@ -21,7 +22,6 @@ defimpl Differ.Patchable, for: Map do
   end
 
   def perform(str, op, acc, cb \\ &default_callback/1)
-
 
   def perform(_, {:eq, _} = op, {new_map, _}, _cb), do: {:ok, {new_map, op}}
 

@@ -65,6 +65,7 @@ defimpl Differ.Patchable, for: BitString do
 
   def perform(_, {:ins, _} = op, {new_str, index}, cb) do
     val = cb.(op)
+
     new_str =
       cond do
         index == 0 ->

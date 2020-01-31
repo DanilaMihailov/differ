@@ -151,7 +151,7 @@ defmodule Differ do
     end)
   end
 
-  @doc """ 
+  @doc """
   Allows to visualize diff
 
   Applies diff to a `term` and calls `cb` on each operation,
@@ -173,7 +173,8 @@ defmodule Differ do
       {:ok, "qwer--123++ty"}
 
   """
-  @spec show_diff(Patchable.t(), Diffable.diff(), (Diffable.operation() -> any), [revert: true]) :: any
+  @spec show_diff(Patchable.t(), Diffable.diff(), (Diffable.operation() -> any), revert: true) ::
+          any
   def show_diff(term, diff, cb, opts \\ []) do
     revert? = Keyword.get(opts, :revert, true)
     term = if revert?, do: revert!(term, diff), else: term
@@ -191,11 +192,13 @@ defmodule Differ do
         case diff_res do
           {:ok, val} ->
             new_op = Tuple.append(op, val)
+
             if is_nil(cb) do
               Patchable.perform(old_val, new_op, acc)
             else
               Patchable.perform(old_val, new_op, acc, cb)
-            end |> match_res(old_val, acc, revert, cb)
+            end
+            |> match_res(old_val, acc, revert, cb)
 
           _ ->
             {:halt, diff_res}
@@ -220,7 +223,8 @@ defmodule Differ do
               Patchable.perform(old_val, op, acc)
             else
               Patchable.perform(old_val, op, acc, cb)
-            end |> match_res(old_val, acc, revert, cb)
+            end
+            |> match_res(old_val, acc, revert, cb)
 
           _ ->
             {:halt, op}
