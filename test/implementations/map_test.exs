@@ -1,5 +1,5 @@
 defmodule Differ.MapTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   setup do
     old_map = %{

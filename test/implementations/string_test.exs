@@ -1,5 +1,5 @@
 defmodule Differ.StringTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   test "empty strings" do
     diff = Differ.diff("", "")

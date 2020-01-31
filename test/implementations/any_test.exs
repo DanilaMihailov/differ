@@ -1,5 +1,5 @@
 defmodule Differ.AnyTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   defmodule Some do
     defstruct val: 0

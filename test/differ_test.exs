@@ -1,5 +1,5 @@
 defmodule DifferTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   # used in doc tests
   defmodule User do

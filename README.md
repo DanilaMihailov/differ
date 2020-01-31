@@ -28,10 +28,9 @@ iex> Differ.patch("Hello!", [eq: "He", del: "llo", ins: "y", eq: "!"])
 Simple diff of two maps
 
 ```elixir
-user = %{name: "John"}
-updated_user = Map.put(user, :age, 25)
-Differ.diff(user, updated_user)
-
+iex> user = %{name: "John"}
+iex> updated_user = Map.put(user, :age, 25)
+iex> Differ.diff(user, updated_user)
 [{:name, :eq, "John"}, {:age, :ins, 25}]
 ```
 
@@ -59,13 +58,13 @@ iex> Differ.diff(%User{name: "John"}, %User{name: "John Smith"})
 As well as creating diffs, you can apply diff to a `term`. There is `Differ.patch/2` and `Differ.revert/2` for this purposes.
 
 ```elixir
-diff = Differ.diff("Hello!", "Hey!")
-Differ.patch("Hello!", diff)
+iex> diff = Differ.diff("Hello!", "Hey!")
+iex> Differ.patch("Hello!", diff)
 {:ok, "Hey!"}
 ```
 or revert diff
 ```elixir
-Differ.revert("Hey!", diff)
+iex> Differ.revert("Hey!", diff)
 {:ok, "Hello!"}
 ```
 
