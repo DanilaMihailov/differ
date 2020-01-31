@@ -8,11 +8,6 @@ defimpl Differ.Patchable, for: BitString do
     end
   end
 
-  @doc """
-  Performs an operation `op` on string `str`
-  """
-  # def perform(str, op, acc, cb \\ &(&1))
-
   defp default_callback(op) do
     case op do
       {:del, _} -> ""
@@ -48,10 +43,11 @@ defimpl Differ.Patchable, for: BitString do
     {:ok, {before <> add, index}}
   end
 
-  def perform(_, {:eq, val} = op, {new_str, index}, cb) do
+  def perform(_, {:eq, val} = op, {new_str, index}, _cb) do
     len = String.length(val)
     part = String.slice(new_str, index, len)
-    new_val = cb.(op)
+    # TODO: check if we need to call cb here
+    # new_val = cb.(op)
 
     case part do
       ^val -> {:ok, {new_str, index + len}}
@@ -59,7 +55,8 @@ defimpl Differ.Patchable, for: BitString do
     end
   end
 
-  def perform(_, {:skip, val}, {new_str, index}, cb) do
+  # TODO: check if we need to call cb here
+  def perform(_, {:skip, val}, {new_str, index}, _cb) do
     {:ok, {new_str, index + val}}
   end
 
