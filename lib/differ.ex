@@ -151,6 +151,29 @@ defmodule Differ do
     end)
   end
 
+  @doc """ 
+  Allows to visualize diff
+
+  Applies diff to a `term` and calls `cb` on each operation,
+  result of `cb` will be used to construct new value for `term`
+
+  ## Options
+    - `revert` - reverts term with given diff, before apply (default `true`)
+
+  ## Examples
+
+      iex> Differ.show_diff("qwerty", [eq: "qwer", del: "123", ins: "ty"],
+      ...> fn {op, val} ->
+      ...>   case op do
+      ...>     :del -> "--" <> val
+      ...>     :ins -> "++" <> val
+      ...>     _ -> val
+      ...>   end
+      ...> end)
+      {:ok, "qwer--123++ty"}
+
+  """
+  @spec show_diff(Patchable.t(), Diffable.diff(), (Diffable.operation() -> any), [revert: true]) :: any
   def show_diff(term, diff, cb, opts \\ []) do
     revert? = Keyword.get(opts, :revert, true)
     term = if revert?, do: revert!(term, diff), else: term
