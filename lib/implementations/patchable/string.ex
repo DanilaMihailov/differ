@@ -20,6 +20,7 @@ defimpl Differ.Patchable, for: BitString do
       {:eq, val} -> val
       {:skip, val} -> val
       {:ins, val} -> val
+      _ -> op
     end
   end
 
@@ -62,7 +63,7 @@ defimpl Differ.Patchable, for: BitString do
     {:ok, {new_str, index + val}}
   end
 
-  def perform(_, op, {new_str, index}, cb) do
+  def perform(_, {:ins, _} = op, {new_str, index}, cb) do
     val = cb.(op)
     new_str =
       cond do

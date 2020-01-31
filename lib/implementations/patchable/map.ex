@@ -16,6 +16,7 @@ defimpl Differ.Patchable, for: Map do
       {:eq, val} -> val
       {:skip, val} -> val
       {:ins, val} -> val
+      _ -> op
     end
   end
 
