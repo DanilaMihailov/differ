@@ -7,7 +7,7 @@ iex> Differ.diff("Hello!", "Hey!")
 [eq: "He", del: "llo", ins: "y", eq: "!"]
 
 iex> Differ.patch("Hello!", [eq: "He", del: "llo", ins: "y", eq: "!"])
-"Hey!"
+{:ok, "Hey!"}
 ```
 
 <!-- ## Installation -->
@@ -56,7 +56,20 @@ iex> Differ.diff(%User{name: "John"}, %User{name: "John Smith"})
 [{:name, :diff, [eq: "John", ins: " Smith"]}, {:age, :eq, 21}]
 ```
 
-For more advanced documentation look at `Differ`
+As well as creating diffs, you can apply diff to a `term`. There is `Differ.patch/2` and `Differ.revert/2` for this purposes.
+
+```elixir
+diff = Differ.diff("Hello!", "Hey!")
+Differ.patch("Hello!", diff)
+{:ok, "Hey!"}
+```
+or revert diff
+```elixir
+Differ.revert("Hey!", diff)
+{:ok, "Hello!"}
+```
+
+For more advanced documentation look at `Differ` module docs.
 
 <!-- Documentation can be found at [https://hexdocs.pm/differ](https://hexdocs.pm/differ). -->
 
