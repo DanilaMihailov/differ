@@ -46,8 +46,8 @@ It is possible to use `Differ` with structs, you need to derive default implemen
 for `Differ.Diffable` and `Differ.Patchable` protocols:
 ```elixir
 defmodule User do
-@derive [Differ.Diffable, Differ.Patchable]
-defstruct name: "", age: 21
+    @derive [Differ.Diffable, Differ.Patchable]
+    defstruct name: "", age: 21
 end
 ```
 And now you can call `Differ.diff/2` with your structs:
