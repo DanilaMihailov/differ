@@ -5,12 +5,15 @@ defmodule Differ.MixProject do
     [
       app: :differ,
       version: "0.1.0",
-      source_url: "https://github.com/DanilaMihailov/Differ",
-      homepage_url: "https://github.com/DanilaMihailov/Differ",
+      source_url: "https://github.com/DanilaMihailov/differ",
+      homepage_url: "https://github.com/DanilaMihailov/differ",
       elixir: "~> 1.8",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       docs: docs(),
+      description: description(),
+      package: package(),
+      # test coverage
       test_coverage: [tool: ExCoveralls],
       preferred_cli_env: [
         coveralls: :test,
@@ -24,14 +27,10 @@ defmodule Differ.MixProject do
     ]
   end
 
-  # Run "mix help compile.app" to learn about applications.
   def application do
-    [
-      extra_applications: [:logger]
-    ]
+    []
   end
 
-  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       # generating documentation (mix docs)
@@ -46,6 +45,17 @@ defmodule Differ.MixProject do
       {:credo, "~> 1.1.0", only: [:dev, :test], runtime: false},
       # benchmarks (mix run benchmarks/script_name.exs)
       {:benchee, "~> 1.0", only: :dev, runtime: false}
+    ]
+  end
+
+  defp description() do
+    "Small library for creating diffs and applying them."
+  end
+
+  defp package() do
+    [
+      licenses: ["Apache-2.0"],
+      links: %{"GitHub" => "https://github.com/DanilaMihailov/differ"}
     ]
   end
 
