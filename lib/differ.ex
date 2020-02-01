@@ -151,11 +151,13 @@ defmodule Differ do
     end)
   end
 
+  @doc since: "0.1.1"
   @deprecated "Use Differ.explain/3 instead"
   def show_diff(term, diff, cb, opts \\ []) do
     {:ok, explain(term, diff, cb, opts)}
   end
 
+  @doc since: "0.1.1"
   @doc """
   Allows to visualize diff
 
