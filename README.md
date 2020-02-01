@@ -72,4 +72,4 @@ iex> Differ.revert("Hey!", diff)
 {:ok, "Hello!"}
 ```
 
-For more examples look at the [docs](https://hexdocs.pm/differ).
+For more examples look at the [docs](https://hexdocs.pm/differ/Differ.html).
