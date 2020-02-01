@@ -1,4 +1,4 @@
-# Differ
+# Differ 
 
 Small library for creating diffs and applying them
 
@@ -10,18 +10,22 @@ iex> Differ.patch("Hello!", [eq: "He", del: "llo", ins: "y", eq: "!"])
 {:ok, "Hey!"}
 ```
 
-<!-- ## Installation -->
-<!--  -->
-<!-- The package can be installed -->
-<!-- by adding `differ` to your list of dependencies in `mix.exs`: -->
-<!--  -->
-<!-- ```elixir -->
-<!-- def deps do -->
-<!--   [ -->
-<!--     {:differ, "~> 0.1.0"} -->
-<!--   ] -->
-<!-- end -->
-<!-- ``` -->
+## Installation
+
+The package can be installed
+by adding `differ` to your list of dependencies in `mix.exs`:
+
+```elixir
+def deps do
+  [
+    {:differ, "~> 0.1.0"}
+  ]
+end
+```
+
+## Documentation
+
+Documentation can be found at [https://hexdocs.pm/differ](https://hexdocs.pm/differ).
 
 ## Usage
 
@@ -68,7 +72,4 @@ iex> Differ.revert("Hey!", diff)
 {:ok, "Hello!"}
 ```
 
-For more advanced documentation look at `Differ` module docs.
-
-<!-- Documentation can be found at [https://hexdocs.pm/differ](https://hexdocs.pm/differ). -->
-
+For more examples look at the [docs](https://hexdocs.pm/differ).
