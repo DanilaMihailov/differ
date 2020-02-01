@@ -151,6 +151,11 @@ defmodule Differ do
     end)
   end
 
+  @deprecated "Use Differ.explain/3 instead"
+  def show_diff(term, diff, cb, opts \\ []) do
+    {:ok, explain(term, diff, cb, opts)}
+  end
+
   @doc """
   Allows to visualize diff
 
@@ -162,7 +167,7 @@ defmodule Differ do
 
   ## Examples
 
-      iex> Differ.show_diff("qwerty", [eq: "qwer", del: "123", ins: "ty"],
+      iex> Differ.explain("qwerty", [eq: "qwer", del: "123", ins: "ty"],
       ...> fn {op, val} ->
       ...>   case op do
       ...>     :del -> "--" <> val
@@ -170,15 +175,20 @@ defmodule Differ do
       ...>     _ -> val
       ...>   end
       ...> end)
-      {:ok, "qwer--123++ty"}
+      "qwer--123++ty"
 
   """
-  @spec show_diff(Patchable.t(), Diffable.diff(), (Diffable.operation() -> any), revert: true) ::
-          any
-  def show_diff(term, diff, cb, opts \\ []) do
+  @spec explain(Patchable.t(), Diffable.diff(), (Diffable.operation() -> String.t()), revert: true) :: String.t()
+  def explain(term, diff, cb, opts \\ []) do
     revert? = Keyword.get(opts, :revert, true)
     term = if revert?, do: revert!(term, diff), else: term
-    apply_diff(term, diff, false, cb)
+
+    {res, _} = Enum.reduce(diff, {"", 0}, fn op, acc ->
+      {:ok, acc} = Patchable.explain(term, op, acc, cb)
+      acc
+    end)
+
+    res
   end
 
   defp match_res(res, old_val, acc, revert, cb) do
@@ -192,12 +202,7 @@ defmodule Differ do
         case diff_res do
           {:ok, val} ->
             new_op = Tuple.append(op, val)
-
-            if is_nil(cb) do
-              Patchable.perform(old_val, new_op, acc)
-            else
-              Patchable.perform(old_val, new_op, acc, cb)
-            end
+            Patchable.perform(old_val, new_op, acc)
             |> match_res(old_val, acc, revert, cb)
 
           _ ->
@@ -219,11 +224,7 @@ defmodule Differ do
 
         case op do
           {:ok, op} ->
-            if is_nil(cb) do
-              Patchable.perform(old_val, op, acc)
-            else
-              Patchable.perform(old_val, op, acc, cb)
-            end
+            Patchable.perform(old_val, op, acc)
             |> match_res(old_val, acc, revert, cb)
 
           _ ->

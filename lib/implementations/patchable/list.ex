@@ -8,20 +8,20 @@ defimpl Differ.Patchable, for: List do
     end
   end
 
-  defp default_callback(op) do
-    case op do
-      {:del, _} -> ""
-      {:remove, _} -> ""
-      {:eq, val} -> val
-      {:skip, val} -> val
-      {:ins, val} -> val
-      _ -> op
+  def explain(list, op, {res, index}, cb) do
+    new_acc = case op do
+      {:skip, n} -> {res <> cb.({:eq, Enum.slice(list, index, n)}), index + n}
+      {:eq, val} -> {res <> cb.(op), index + Enum.count(val)}
+      {:ins, val} -> {res <> cb.(op), index + Enum.count(val)}
+      {:diff, diff} -> 
+        nres = Differ.explain(Enum.at(list, index), diff, cb)
+        {res <> nres, index + 1}
+      _ -> {res <> cb.(op), index}
     end
+    {:ok, new_acc}
   end
 
-  def perform(str, op, acc, cb \\ &default_callback/1)
-
-  def perform(_, {:del, val} = op, {new_list, index}, _cb) do
+  def perform(_, {:del, val} = op, {new_list, index}) do
     len = Enum.count(val)
     part = Enum.slice(new_list, index, len)
 
@@ -31,14 +31,14 @@ defimpl Differ.Patchable, for: List do
     end
   end
 
-  def perform(_, {:remove, len}, {nlist, index}, _cb) do
+  def perform(_, {:remove, len}, {nlist, index}) do
     {before, next} = Enum.split(nlist, index)
     {_, add} = Enum.split(next, len)
 
     {:ok, {before ++ add, index}}
   end
 
-  def perform(_, {:eq, val} = op, {new_list, index}, _cb) do
+  def perform(_, {:eq, val} = op, {new_list, index}) do
     len = Enum.count(val)
     part = Enum.slice(new_list, index, len)
 
@@ -48,11 +48,11 @@ defimpl Differ.Patchable, for: List do
     end
   end
 
-  def perform(_, {:skip, val}, {new_list, index}, _cb) do
+  def perform(_, {:skip, val}, {new_list, index}) do
     {:ok, {new_list, index + val}}
   end
 
-  def perform(_, {:ins, val}, {new_list, index}, _cb) do
+  def perform(_, {:ins, val}, {new_list, index}) do
     {new_list, _} =
       Enum.reduce(List.wrap(val), {new_list, index}, fn v, {l, i} ->
         {List.insert_at(l, i, v), i + 1}
@@ -61,13 +61,13 @@ defimpl Differ.Patchable, for: List do
     {:ok, {new_list, index + Enum.count(val)}}
   end
 
-  def perform(_, {:replace, val}, {new_list, index}, _cb) do
+  def perform(_, {:replace, val}, {new_list, index}) do
     {:ok, {List.replace_at(new_list, index, val), index + 1}}
   end
 
-  def perform(old_list, {:diff, diff}, {_, index}, _cb) do
+  def perform(old_list, {:diff, diff}, {_, index}) do
     {:diff, diff, Enum.at(old_list, index), {:replace}}
   end
 
-  def perform(_, _, _, _cb), do: {:error, "Unknown operation"}
+  def perform(_, _, _), do: {:error, "Unknown operation"}
 end

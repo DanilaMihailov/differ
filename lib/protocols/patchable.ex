@@ -18,12 +18,13 @@ defprotocol Differ.Patchable do
 
   Function should return tuple with `:ok` atom and tuple `{result, anything}`
   """
-  # @spec perform(t(), Diffable.operation(), tuple) ::
-  #         {:ok, {term, any}} | {:error, reason()} | {:conflict, any}
-  # @spec perform(t(), {term, :diff, Diffable.diff()}, tuple) ::
-  #         {:diff, Diffable.diff(), term, {term, :ins}}
+  @spec perform(t(), Diffable.operation(), tuple) ::
+          {:ok, {term, any}} | {:error, reason()} | {:conflict, any}
+  @spec perform(t(), {term, :diff, Diffable.diff()}, tuple) ::
+          {:diff, Diffable.diff(), term, {term, :ins}}
   def perform(old_val, op, new_val)
-  def perform(old_val, op, new_val, cb)
+
+  def explain(old_val, op, acc, cb)
 
   @doc """
   Returns the opposite of operation
