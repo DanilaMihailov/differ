@@ -4,7 +4,7 @@ defmodule Differ.MixProject do
   def project do
     [
       app: :differ,
-      version: "0.1.0",
+      version: "0.1.1",
       source_url: "https://github.com/DanilaMihailov/differ",
       homepage_url: "https://github.com/DanilaMihailov/differ",
       elixir: "~> 1.8",
