@@ -9,12 +9,14 @@ defimpl Differ.Patchable, for: BitString do
   end
 
   def explain(str, op, {res, index}, cb) do
-    new_acc = case op do
-      {:skip, n} -> {res <> cb.({:eq, String.slice(str, index, n)}), index + n}
-      {:eq, val} -> {res <> cb.(op), index + String.length(val)}
-      {:ins, val} -> {res <> cb.(op), index + String.length(val)}
-      _ -> {res <> cb.(op), index}
-    end
+    new_acc =
+      case op do
+        {:skip, n} -> {res <> cb.({:eq, String.slice(str, index, n)}), index + n}
+        {:eq, val} -> {res <> cb.(op), index + String.length(val)}
+        {:ins, val} -> {res <> cb.(op), index + String.length(val)}
+        _ -> {res <> cb.(op), index}
+      end
+
     {:ok, new_acc}
   end
 
@@ -54,7 +56,6 @@ defimpl Differ.Patchable, for: BitString do
   end
 
   def perform(_, {:ins, val}, {new_str, index}) do
-
     new_str =
       cond do
         index == 0 ->

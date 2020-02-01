@@ -178,15 +178,17 @@ defmodule Differ do
       "qwer--123++ty"
 
   """
-  @spec explain(Patchable.t(), Diffable.diff(), (Diffable.operation() -> String.t()), revert: true) :: String.t()
+  @spec explain(Patchable.t(), Diffable.diff(), (Diffable.operation() -> String.t()), revert: true) ::
+          String.t()
   def explain(term, diff, cb, opts \\ []) do
     revert? = Keyword.get(opts, :revert, true)
     term = if revert?, do: revert!(term, diff), else: term
 
-    {res, _} = Enum.reduce(diff, {"", 0}, fn op, acc ->
-      {:ok, acc} = Patchable.explain(term, op, acc, cb)
-      acc
-    end)
+    {res, _} =
+      Enum.reduce(diff, {"", 0}, fn op, acc ->
+        {:ok, acc} = Patchable.explain(term, op, acc, cb)
+        acc
+      end)
 
     res
   end
@@ -202,6 +204,7 @@ defmodule Differ do
         case diff_res do
           {:ok, val} ->
             new_op = Tuple.append(op, val)
+
             Patchable.perform(old_val, new_op, acc)
             |> match_res(old_val, acc, revert, cb)
 

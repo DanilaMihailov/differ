@@ -11,12 +11,16 @@ defimpl Differ.Patchable, for: Map do
   def revert_op(_, op), do: {:ok, op}
 
   def explain(map, op, {res, index}, cb) do
-    new_acc = case op do
-      {key, :diff, diff} -> 
-        nres = Differ.explain(Map.get(map, key), diff, cb)
-        {res <> nres, index}
-      _ -> {res <> cb.(op), index}
-    end
+    new_acc =
+      case op do
+        {key, :diff, diff} ->
+          nres = Differ.explain(Map.get(map, key), diff, cb)
+          {res <> nres, index}
+
+        _ ->
+          {res <> cb.(op), index}
+      end
+
     {:ok, new_acc}
   end
 

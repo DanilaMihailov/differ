@@ -9,15 +9,25 @@ defimpl Differ.Patchable, for: List do
   end
 
   def explain(list, op, {res, index}, cb) do
-    new_acc = case op do
-      {:skip, n} -> {res <> cb.({:eq, Enum.slice(list, index, n)}), index + n}
-      {:eq, val} -> {res <> cb.(op), index + Enum.count(val)}
-      {:ins, val} -> {res <> cb.(op), index + Enum.count(val)}
-      {:diff, diff} -> 
-        nres = Differ.explain(Enum.at(list, index), diff, cb)
-        {res <> nres, index + 1}
-      _ -> {res <> cb.(op), index}
-    end
+    new_acc =
+      case op do
+        {:skip, n} ->
+          {res <> cb.({:eq, Enum.slice(list, index, n)}), index + n}
+
+        {:eq, val} ->
+          {res <> cb.(op), index + Enum.count(val)}
+
+        {:ins, val} ->
+          {res <> cb.(op), index + Enum.count(val)}
+
+        {:diff, diff} ->
+          nres = Differ.explain(Enum.at(list, index), diff, cb)
+          {res <> nres, index + 1}
+
+        _ ->
+          {res <> cb.(op), index}
+      end
+
     {:ok, new_acc}
   end
 
