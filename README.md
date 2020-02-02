@@ -1,4 +1,5 @@
 # Differ 
+[![Coverage Status](https://coveralls.io/repos/github/DanilaMihailov/differ/badge.svg?branch=master)](https://coveralls.io/github/DanilaMihailov/differ?branch=master)
 
 Small library for creating diffs and applying them
 
