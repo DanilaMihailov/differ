@@ -1,4 +1,4 @@
-# Differ [![Coverage Status](https://coveralls.io/repos/github/DanilaMihailov/differ/badge.svg?branch=master)](https://coveralls.io/github/DanilaMihailov/differ?branch=master)
+# Differ [![Hex Version](https://img.shields.io/hexpm/v/differ.svg)](https://hex.pm/packages/differ) [![docs](https://img.shields.io/badge/docs-hexpm-blue.svg)](https://hexdocs.pm/differ/) [![Coverage Status](https://coveralls.io/repos/github/DanilaMihailov/differ/badge.svg?branch=master)](https://coveralls.io/github/DanilaMihailov/differ?branch=master)
 
 Small library for creating diffs and applying them
 
