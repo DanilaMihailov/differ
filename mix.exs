@@ -66,7 +66,7 @@ defmodule Differ.MixProject do
         Protocols: ~r/able/
       ],
       extras: [
-        "README.md"
+        "README.md": [title: "README"]
       ]
     ]
   end
