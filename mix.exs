@@ -44,7 +44,9 @@ defmodule Differ.MixProject do
       # static analysis and style checks (mix credo --strict)
       {:credo, "~> 1.2", only: [:dev, :test], runtime: false},
       # benchmarks (mix run benchmarks/script_name.exs)
-      {:benchee, "~> 1.0", only: :dev, runtime: false}
+      {:benchee, "~> 1.0", only: :dev, runtime: false},
+      # mix docs.build
+      {:docs_getter, "~> 0.1-pre", only: :dev, runtime: false}
     ]
   end
 
