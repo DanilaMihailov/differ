@@ -22,6 +22,6 @@ Benchee.run(
     "Patch level 2" => fn -> Enum.map(l2, &Differ.patch(old_user, &1)) end,
     "Patch level 3" => fn -> Enum.map(l3, &Differ.patch(old_user, &1)) end
   },
-  save: [path: "benchmarks/simple.benchee"],
-  load: "benchmarks/simple.benchee"
+  save: [path: "benchmarks/results/simple.benchee"],
+  load: "benchmarks/results/simple.benchee"
 )
