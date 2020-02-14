@@ -146,9 +146,10 @@ defmodule Differ do
     Enum.reduce(diff, [], fn operation, new_diff ->
       case optimize_op(operation, level) do
         nil -> new_diff
-        opt -> new_diff ++ [opt]
+        opt -> [opt | new_diff]
       end
     end)
+    |> Enum.reverse()
   end
 
   @doc since: "0.1.1"
