@@ -1,5 +1,11 @@
-old_user = %{name: "Ron Artest", teams: ["Bulls", "Pacers"], height: 201}
-new_user = %{name: "Metta World Peace", teams: ["Bulls", "Pacers", "Kings", "Rockets"], height: 201, weight: 118}
+old_user = %{name: "Ron Artest", teams: ["Bulls", "Paccccers"], height: 201}
+
+new_user = %{
+  name: "Metta World Peace",
+  teams: ["Bulls", "Pacers", "Kings", "Rockets"],
+  height: 201,
+  weight: 118
+}
 
 limit = 100
 
@@ -11,9 +17,11 @@ l3 = diff |> Differ.optimize(3) |> List.duplicate(limit)
 
 Benchee.run(
   %{
-    "Patch level 0" => fn -> Enum.map(l0, &(Differ.patch(old_user, &1))) end,
-    "Patch level 1" => fn -> Enum.map(l1, &(Differ.patch(old_user, &1))) end,
-    "Patch level 2" => fn -> Enum.map(l2, &(Differ.patch(old_user, &1))) end,
-    "Patch level 3" => fn -> Enum.map(l3, &(Differ.patch(old_user, &1))) end
-  }
+    "Patch level 0" => fn -> Enum.map(l0, &Differ.patch(old_user, &1)) end,
+    "Patch level 1" => fn -> Enum.map(l1, &Differ.patch(old_user, &1)) end,
+    "Patch level 2" => fn -> Enum.map(l2, &Differ.patch(old_user, &1)) end,
+    "Patch level 3" => fn -> Enum.map(l3, &Differ.patch(old_user, &1)) end
+  },
+  save: [path: "benchmarks/simple.benchee"],
+  load: "benchmarks/simple.benchee"
 )
