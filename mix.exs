@@ -45,6 +45,7 @@ defmodule Differ.MixProject do
       {:credo, "~> 1.2", only: [:dev, :test], runtime: false},
       # benchmarks (mix run benchmarks/script_name.exs)
       {:benchee, "~> 1.0", only: :dev, runtime: false},
+      {:benchee_html, "~> 1.0", only: :dev},
       # mix docs.build
       {:docs_getter, "~> 0.1-pre", only: :dev, runtime: false}
     ]

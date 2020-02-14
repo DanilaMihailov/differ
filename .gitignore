@@ -25,6 +25,7 @@ differ-*.tar
 
 # Ignore saved benchmarks results
 /benchmarks/results/
+/benchmarks/output/
 
 # Vim elixir ls files
 /.elixir_ls
